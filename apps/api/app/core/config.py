@@ -47,6 +47,15 @@ class Settings(BaseSettings):
     ai_retry_max_attempts: int = Field(default=3)
     ai_retry_base_delay_seconds: float = Field(default=0.5)
 
+    # --- Terminal Engine (see services/terminal/config.py for enforcement) ---
+    terminal_workspace_root: str | None = Field(default=None)
+    terminal_default_timeout_seconds: int = Field(default=30)
+    terminal_max_timeout_seconds: int = Field(default=120)
+    terminal_max_stdout_bytes: int = Field(default=1_000_000)
+    terminal_max_stderr_bytes: int = Field(default=1_000_000)
+    terminal_session_ttl_seconds: int = Field(default=900)
+    terminal_max_concurrent_sessions: int = Field(default=20)
+
     @property
     def cors_origins(self) -> list[str]:
         return [origin.strip() for origin in self.api_cors_origins.split(",") if origin.strip()]

@@ -1,17 +1,50 @@
 "use client";
 
 import { Check, Copy, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TerminalLines } from "@/components/terminal/terminal-lines";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MOCK_TERMINAL_SESSION, MOCK_TERMINAL_SESSION_LINES } from "@/lib/mock";
+import { createTerminalSession, type TerminalSessionInfo } from "@/lib/terminal-api";
+import { MOCK_TERMINAL_SESSION_LINES } from "@/lib/mock";
 import type { TerminalLine } from "@/types/dashboard";
 
+function nowLabel(): string {
+  return new Date().toLocaleTimeString(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
+
+/**
+ * Real session lifecycle, backed by the Terminal Engine
+ * (services/terminal/engine.py) via POST /api/terminal/sessions — this is
+ * not mock session info. Command output stays mock/sample content and the
+ * input stays non-executing: there is no action-type picker in this UI
+ * yet, and this component never sends raw command text to the backend —
+ * the execute API only accepts a reviewed `actionType`, never argv.
+ */
 export function TerminalWindow() {
   const [lines, setLines] = useState<TerminalLine[]>(MOCK_TERMINAL_SESSION_LINES);
   const [input, setInput] = useState("");
   const [copied, setCopied] = useState(false);
+  const [session, setSession] = useState<TerminalSessionInfo | null>(null);
+  const [connectionError, setConnectionError] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    createTerminalSession()
+      .then((created) => {
+        if (!cancelled) setSession(created);
+      })
+      .catch(() => {
+        if (!cancelled) setConnectionError(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handleCopy() {
     const text = lines.map((line) => line.text).join("\n");
@@ -38,30 +71,42 @@ export function TerminalWindow() {
       {
         id: `local-${prev.length}`,
         kind: "system",
-        text: `Command staging is disabled in Phase 2 — "${command}" was not executed.`,
-        timestamp: new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+        text: `Command execution is not exposed in this UI — the backend only accepts reviewed action types, never raw text like "${command}".`,
+        timestamp: nowLabel(),
       },
     ]);
     setInput("");
   }
 
+  const isConnected = session !== null && !connectionError;
+
   return (
     <div className="glass-raised flex flex-col rounded-lg">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
         <div className="flex items-center gap-3 text-xs">
-          <Badge tone="accent">
-            <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse-dot" aria-hidden="true" />
-            Connected
+          <Badge tone={isConnected ? "accent" : connectionError ? "danger" : "neutral"}>
+            <span
+              className={`h-1.5 w-1.5 rounded-full bg-current ${isConnected ? "animate-pulse-dot" : ""}`}
+              aria-hidden="true"
+            />
+            {isConnected ? "Connected" : connectionError ? "Unavailable" : "Connecting…"}
           </Badge>
-          <span className="text-muted">
-            Platform: <span className="text-muted-strong">{MOCK_TERMINAL_SESSION.adapter}</span>
-          </span>
-          <span className="hidden text-muted sm:inline">
-            Session: <span className="font-mono text-muted-strong">{MOCK_TERMINAL_SESSION.sessionId}</span>
-          </span>
-          <span className="hidden text-muted lg:inline">
-            Host: <span className="text-muted-strong">{MOCK_TERMINAL_SESSION.host}</span>
-          </span>
+          {session && (
+            <>
+              <span className="text-muted">
+                Platform: <span className="text-muted-strong">{session.platform}</span>
+              </span>
+              <span className="hidden text-muted sm:inline">
+                Session: <span className="font-mono text-muted-strong">{session.id}</span>
+              </span>
+              <span className="hidden text-muted lg:inline">
+                Status: <span className="text-muted-strong">{session.status}</span>
+              </span>
+            </>
+          )}
+          {connectionError && (
+            <span className="text-danger">Could not reach the Terminal Engine API.</span>
+          )}
         </div>
         <div className="flex items-center gap-1.5">
           <Button
@@ -87,13 +132,13 @@ export function TerminalWindow() {
           $
         </span>
         <label htmlFor="terminal-command" className="sr-only">
-          Terminal command (execution disabled in this phase)
+          Terminal command (execution is not exposed in this UI)
         </label>
         <input
           id="terminal-command"
           value={input}
           onChange={(event) => setInput(event.target.value)}
-          placeholder="Command execution is disabled in Phase 2…"
+          placeholder="Direct command execution is not exposed here…"
           className="flex-1 bg-transparent font-mono text-sm text-foreground placeholder:text-muted outline-none"
         />
         <Button type="submit" size="sm" variant="secondary">

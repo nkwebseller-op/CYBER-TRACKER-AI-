@@ -14,8 +14,11 @@ Phase 1 ships the decision model and a conservative rule set:
   - ALLOW only for low-risk, in-scope, registered actions.
 
 The action-type registry is populated by services/tools in a later phase.
-Until then every action falls through to DENY, which is correct: there are
-no reviewed, executable action types yet.
+Phase 5 adds exactly one reviewed, low-risk entry —
+"diagnostics.echo_test" (see services/terminal/command_templates.py) — a
+harmless cross-platform no-op used to exercise the full
+policy -> engine -> adapter -> result pipeline end-to-end. Every other
+action type still falls through to DENY: nothing else has been reviewed.
 """
 
 from dataclasses import dataclass, field
@@ -67,9 +70,9 @@ class PolicyDecision:
     requires_approval: bool = False
 
 
-# Registry of action types reviewed and approved for execution. Empty by
-# design in Phase 1 — see module docstring.
-REGISTERED_ACTION_TYPES: frozenset[str] = frozenset()
+# Registry of action types reviewed and approved for execution. See module
+# docstring for why "diagnostics.echo_test" is the sole entry.
+REGISTERED_ACTION_TYPES: frozenset[str] = frozenset({"diagnostics.echo_test"})
 
 
 class PolicyEngine:

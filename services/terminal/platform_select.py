@@ -1,33 +1,30 @@
-"""Detects the current OS/runtime and returns the matching adapter."""
-
-import os
-import platform
+"""Selects the platform adapter matching the current runtime."""
 
 from services.terminal.adapters.base import TerminalAdapter
+from services.terminal.errors import UnsupportedPlatformError
+from services.terminal.platform_types import PlatformIdentifier, detect_platform, is_termux
 
-
-def is_termux() -> bool:
-    return "com.termux" in os.environ.get("PREFIX", "")
+__all__ = ["is_termux", "select_adapter"]
 
 
 def select_adapter() -> TerminalAdapter:
-    if is_termux():
+    identifier = detect_platform()
+
+    if identifier == PlatformIdentifier.ANDROID_TERMUX:
         from services.terminal.adapters.termux import TermuxAdapter
 
         return TermuxAdapter()
-
-    system = platform.system()
-    if system == "Linux":
+    if identifier == PlatformIdentifier.LINUX:
         from services.terminal.adapters.linux import LinuxAdapter
 
         return LinuxAdapter()
-    if system == "Darwin":
+    if identifier == PlatformIdentifier.MACOS:
         from services.terminal.adapters.macos import MacOSAdapter
 
         return MacOSAdapter()
-    if system == "Windows":
+    if identifier == PlatformIdentifier.WINDOWS:
         from services.terminal.adapters.windows import WindowsAdapter
 
         return WindowsAdapter()
 
-    raise RuntimeError(f"Unsupported platform: {system!r}")
+    raise UnsupportedPlatformError(f"Unsupported platform: {identifier!r}")
