@@ -6,7 +6,7 @@ export default function ChatPage() {
     <div className="flex h-full flex-col gap-4">
       <PageHeader
         title="Chat / Command Center"
-        description="Describe an authorized security objective in natural language. Phase 2 is UI-only — nothing here is planned or executed yet."
+        description="Describe an authorized security objective in natural language. Cyber AI drafts a task plan for your review — nothing is researched, approved, or executed automatically."
       />
       <div className="min-h-0 flex-1">
         <ChatPanel />

@@ -1,4 +1,3 @@
-export * from "@/lib/mock/chat";
 export * from "@/lib/mock/dashboard";
 export * from "@/lib/mock/reports";
 export * from "@/lib/mock/targets";

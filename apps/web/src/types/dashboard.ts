@@ -149,14 +149,5 @@ export interface SecurityReport {
   status: ReportStatus;
 }
 
-export type ChatRole = "user" | "assistant" | "system";
-
-export interface ChatUIMessage {
-  id: string;
-  role: ChatRole;
-  content: string;
-  timestamp: string;
-  status?: "sending" | "sent" | "error";
-}
-
-export type ExecutionIndicatorState = "idle" | "planning" | "awaiting_approval" | "running" | "stopped";
+// Chat / Command Center types (message model, task intent, task plan,
+// streaming events) live in src/types/chat.ts as of Phase 3.
