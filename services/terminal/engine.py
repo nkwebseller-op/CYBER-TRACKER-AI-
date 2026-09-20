@@ -101,6 +101,7 @@ class TerminalEngine:
         platform_session_event = {
             PlatformIdentifier.WINDOWS: self._windows_session_created_event,
             PlatformIdentifier.LINUX: self._linux_session_created_event,
+            PlatformIdentifier.MACOS: self._macos_session_created_event,
         }.get(platform)
         if platform_session_event is not None:
             self._audit.emit(
@@ -124,6 +125,12 @@ class TerminalEngine:
         from services.terminal.adapters.linux import LINUX_SESSION_CREATED
 
         return LINUX_SESSION_CREATED
+
+    @staticmethod
+    def _macos_session_created_event() -> str:
+        from services.terminal.adapters.macos import MACOS_SESSION_CREATED
+
+        return MACOS_SESSION_CREATED
 
     def get_status(self, session_id: UUID) -> TerminalSession:
         return self._sessions.get_session(session_id)
@@ -257,6 +264,7 @@ class TerminalEngine:
         return select_adapter(
             windows_powershell_path=self._config.windows_powershell_path,
             linux_shell_path=self._config.linux_shell_path,
+            macos_shell_path=self._config.macos_shell_path,
         )
 
     @staticmethod

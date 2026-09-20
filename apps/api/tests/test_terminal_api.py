@@ -8,7 +8,8 @@ from uuid import uuid4
 
 import pytest
 from services.terminal.adapters.linux import LinuxTerminalAdapter
-from services.terminal.adapters.macos import MacOSAdapter
+from services.terminal.adapters.macos import MacOSTerminalAdapter
+from services.terminal.adapters.termux import TermuxAdapter
 from services.terminal.adapters.windows import WindowsTerminalAdapter
 from services.terminal.engine import TerminalEngine
 
@@ -209,10 +210,10 @@ async def test_session_reports_windows_platform_and_shell(client, monkeypatch):
 
 
 async def test_session_shell_is_null_for_platforms_without_shell_capabilities(client):
-    """macOS/Termux adapters don't implement get_capabilities() (unchanged
-    from Phase 5/6) — `shell` stays null for them, unlike Windows/Linux."""
-    macos_engine = TerminalEngine(adapter=MacOSAdapter())
-    app.dependency_overrides[get_terminal_engine] = lambda: macos_engine
+    """Termux hasn't implemented get_capabilities() yet (out of scope for
+    this phase) — `shell` stays null for it, unlike Windows/Linux/macOS."""
+    termux_engine = TerminalEngine(adapter=TermuxAdapter())
+    app.dependency_overrides[get_terminal_engine] = lambda: termux_engine
 
     response = await client.post("/api/terminal/sessions", json={})
 
@@ -223,6 +224,7 @@ async def test_session_shell_is_null_for_platforms_without_shell_capabilities(cl
 async def test_session_reports_linux_platform_and_shell(client, monkeypatch):
     linux_engine = TerminalEngine(adapter=LinuxTerminalAdapter())
     app.dependency_overrides[get_terminal_engine] = lambda: linux_engine
+    monkeypatch.delenv("SHELL", raising=False)
     monkeypatch.setattr("shutil.which", lambda name: "/bin/bash" if name == "bash" else None)
 
     response = await client.post("/api/terminal/sessions", json={})
@@ -231,3 +233,17 @@ async def test_session_reports_linux_platform_and_shell(client, monkeypatch):
     body = response.json()
     assert body["platform"] == "LINUX"
     assert body["shell"] == "/bin/bash"
+
+
+async def test_session_reports_macos_platform_and_shell(client, monkeypatch):
+    macos_engine = TerminalEngine(adapter=MacOSTerminalAdapter())
+    app.dependency_overrides[get_terminal_engine] = lambda: macos_engine
+    monkeypatch.delenv("SHELL", raising=False)
+    monkeypatch.setattr("shutil.which", lambda name: "/bin/zsh" if name == "zsh" else None)
+
+    response = await client.post("/api/terminal/sessions", json={})
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["platform"] == "MACOS"
+    assert body["shell"] == "/bin/zsh"

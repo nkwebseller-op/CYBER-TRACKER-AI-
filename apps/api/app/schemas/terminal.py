@@ -30,8 +30,8 @@ class SessionResponse(BaseModel):
     working_directory: str | None = Field(default=None, alias="workingDirectory")
     task_id: str | None = Field(default=None, alias="taskId")
     # Populated only when the resolved adapter exposes shell capabilities
-    # (Windows -> "POWERSHELL"/"UNAVAILABLE"; Linux -> resolved shell path
-    # or "UNAVAILABLE"). None for macOS/Termux, unchanged from Phase 5.
+    # (Windows -> "POWERSHELL"/"UNAVAILABLE"; Linux/macOS -> resolved shell
+    # path or "UNAVAILABLE"). None for Termux, unchanged from Phase 5.
     shell: str | None = None
 
     model_config = ConfigDict(populate_by_name=True)

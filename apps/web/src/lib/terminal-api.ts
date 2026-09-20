@@ -29,8 +29,8 @@ export interface TerminalSessionInfo {
   workingDirectory: string | null;
   taskId: string | null;
   /** Populated for platforms with a distinct shell (Windows ->
-   * "POWERSHELL"/"UNAVAILABLE"; Linux -> resolved shell path or
-   * "UNAVAILABLE"). Null for macOS/Termux. */
+   * "POWERSHELL"/"UNAVAILABLE"; Linux/macOS -> resolved shell path or
+   * "UNAVAILABLE"). Null for Termux. */
   shell: string | null;
 }
 

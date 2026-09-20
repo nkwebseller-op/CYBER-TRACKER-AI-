@@ -61,6 +61,9 @@ class Settings(BaseSettings):
     # None means auto-detect ($SHELL, then bash/sh) — informational only,
     # see services/terminal/adapters/linux.py.
     terminal_linux_shell_path: str | None = Field(default=None)
+    # None means auto-detect ($SHELL, then zsh/bash/sh) — informational
+    # only, see services/terminal/adapters/macos.py.
+    terminal_macos_shell_path: str | None = Field(default=None)
 
     @property
     def cors_origins(self) -> list[str]:

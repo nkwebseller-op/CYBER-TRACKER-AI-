@@ -39,6 +39,14 @@ class TerminalEngineConfig:
     # above rather than duplicating them.
     linux_shell_path: str | None = None
 
+    # macOS-specific: shell executable path override. None means
+    # "auto-detect" (see
+    # services.terminal.adapters.macos.resolve_macos_shell) — informational
+    # only, since command templates always supply argv directly rather than
+    # a shell string. Every other macOS-adapter setting reuses the fields
+    # above rather than duplicating them.
+    macos_shell_path: str | None = None
+
     def clamp_timeout(self, requested_seconds: int | None) -> int:
         if requested_seconds is None:
             return self.default_timeout_seconds
