@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     # --- AI provider ---
     ai_provider: str = Field(default="gemini")
     gemini_api_key: str = Field(default="")
-    gemini_model: str = Field(default="gemini-2.5-flash")
+    gemini_model: str = Field(default="gemini-3.6-flash")
 
     # Cost/latency/token controls (see services/agent/chat_pipeline.py and
     # services/agent/conversation_context.py for where these are enforced).
