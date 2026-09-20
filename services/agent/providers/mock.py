@@ -88,6 +88,9 @@ class MockProvider(AIProvider):
         temperature: float = 0.2,
         max_output_tokens: int | None = None,
     ) -> StructuredCompletionResult:
+        if "actionType" in schema.get("properties", {}):
+            return self._generate_agent_decision(messages)
+
         objective = _find_last_user_message(messages).strip()
         normalized = objective.lower()
 
@@ -164,6 +167,62 @@ class MockProvider(AIProvider):
             "nextAction": next_action,
         }
 
+        return StructuredCompletionResult(
+            data=data, raw_text="", model="mock-1", provider=self.name
+        )
+
+    def _generate_agent_decision(self, messages: list[Message]) -> StructuredCompletionResult:
+        """Deterministic stand-in for services.agent_orchestrator's
+        per-step reasoning call — never a real plan, just enough to
+        exercise the orchestrator's validation/policy/execution pipeline
+        with `AI_PROVIDER=mock` the same way the chat mock branch above
+        exercises the chat pipeline."""
+        context = _find_last_user_message(messages)
+        authorized = "Authorization status: AUTHORIZED" in context
+        completed_actions = 0
+        for line in context.splitlines():
+            if line.strip().startswith("Completed actions ("):
+                try:
+                    completed_actions = int(line.split("(")[1].split(" total")[0])
+                except (IndexError, ValueError):
+                    completed_actions = 0
+
+        if not authorized:
+            data = {
+                "reasoningSummary": "Authorization is not yet confirmed for this target.",
+                "intent": "CLARIFY",
+                "nextAction": "Ask the user to confirm authorization for the target.",
+                "actionType": "ASK_USER",
+                "requiresApproval": False,
+                "missingInformation": ["authorization"],
+                "expectedEvidence": [],
+                "verificationPlan": [],
+                "confidence": 0.9,
+            }
+        elif completed_actions == 0:
+            data = {
+                "reasoningSummary": "Starting with a read-only environment check.",
+                "intent": "CONTINUE",
+                "nextAction": "Check the target environment before selecting a tool.",
+                "actionType": "CHECK_ENVIRONMENT",
+                "requiresApproval": False,
+                "missingInformation": [],
+                "expectedEvidence": ["environment capabilities"],
+                "verificationPlan": [],
+                "confidence": 0.7,
+            }
+        else:
+            data = {
+                "reasoningSummary": "Sufficient information gathered; concluding the task.",
+                "intent": "COMPLETE",
+                "nextAction": "Summarize findings and complete the task.",
+                "actionType": "COMPLETE_TASK",
+                "requiresApproval": False,
+                "missingInformation": [],
+                "expectedEvidence": [],
+                "verificationPlan": [],
+                "confidence": 0.6,
+            }
         return StructuredCompletionResult(
             data=data, raw_text="", model="mock-1", provider=self.name
         )

@@ -380,3 +380,82 @@ class InstalledTool(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     package_manager: Mapped[str] = mapped_column(String(50))
     installed_version: Mapped[str | None] = mapped_column(String(100), nullable=True)
     verification: Mapped[dict] = mapped_column(JSONB, default=dict)
+
+
+class AgentPhaseDb(StrEnum):
+    CREATED = "CREATED"
+    UNDERSTANDING = "UNDERSTANDING"
+    RESEARCHING = "RESEARCHING"
+    PLANNING = "PLANNING"
+    WAITING_FOR_AUTHORIZATION = "WAITING_FOR_AUTHORIZATION"
+    WAITING_FOR_APPROVAL = "WAITING_FOR_APPROVAL"
+    PREPARING = "PREPARING"
+    EXECUTING = "EXECUTING"
+    OBSERVING = "OBSERVING"
+    ANALYZING = "ANALYZING"
+    VERIFYING = "VERIFYING"
+    RECOVERING = "RECOVERING"
+    PAUSED = "PAUSED"
+    CANCELLED = "CANCELLED"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    BLOCKED = "BLOCKED"
+
+
+class AgentTaskRecord(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    """A Phase 12 autonomous agent task. `state_snapshot` is the full
+    serialized services.agent_orchestrator.models.AgentTaskState (actions,
+    observations, findings, evidence, errors, recovery attempts,
+    budgets-used) — the single source of truth AgentOrchestrator.step()
+    re-reads on every call, which is what makes a task resumable across a
+    restart without redoing completed work. `phase`/`objective`/`target`
+    are duplicated out of the snapshot purely so they're indexable/
+    listable without deserializing every row's JSON."""
+
+    __tablename__ = "agent_tasks"
+
+    objective: Mapped[str] = mapped_column(Text)
+    target: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    target_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("targets.id"), nullable=True)
+    phase: Mapped[AgentPhaseDb] = mapped_column(
+        SAEnum(AgentPhaseDb, name="agent_phase"), default=AgentPhaseDb.CREATED
+    )
+    state_snapshot: Mapped[dict] = mapped_column(JSONB, default=dict)
+
+    events: Mapped[list["AgentEventRecord"]] = relationship(
+        back_populates="task", order_by="AgentEventRecord.created_at"
+    )
+    approvals: Mapped[list["AgentApprovalRecord"]] = relationship(
+        back_populates="task", order_by="AgentApprovalRecord.created_at"
+    )
+
+
+class AgentEventRecord(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    """Append-only agent event stream row — mirrors
+    services.agent_orchestrator.events.AgentEvent. Never stores a secret;
+    `data` only ever contains the same operational fields already emitted
+    to the WebSocket hub."""
+
+    __tablename__ = "agent_events"
+
+    task_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("agent_tasks.id"))
+    event_type: Mapped[str] = mapped_column(String(100))
+    data: Mapped[dict] = mapped_column(JSONB, default=dict)
+
+    task: Mapped["AgentTaskRecord"] = relationship(back_populates="events")
+
+
+class AgentApprovalRecord(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    """One row per approve/reject decision on an agent action — the
+    audit trail for human-in-the-loop gating, independent of the
+    mutable state snapshot."""
+
+    __tablename__ = "agent_approvals"
+
+    task_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("agent_tasks.id"))
+    action_id: Mapped[uuid.UUID]
+    decision: Mapped[str] = mapped_column(String(20))
+    decided_by: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    task: Mapped["AgentTaskRecord"] = relationship(back_populates="approvals")
