@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://cyberai/schemas/planned-action.schema.json",
+  "title": "PlannedAction",
+  "description": "A structured action the AI orchestrator proposes. Never a raw shell command.",
+  "type": "object",
+  "required": ["id", "task_id", "action_type", "domain", "target_id", "risk_tier", "parameters", "created_at"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "task_id": { "type": "string", "format": "uuid" },
+    "action_type": {
+      "type": "string",
+      "description": "Registered action type, e.g. 'recon.dns_lookup', 'webapp.header_scan'. Never free-form shell text."
+    },
+    "domain": {
+      "type": "string",
+      "enum": ["web", "api", "network", "server_config", "cloud", "wireless", "mobile", "vulnerability", "reconnaissance", "defensive", "other"]
+    },
+    "target_id": { "type": "string", "format": "uuid" },
+    "risk_tier": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+    "parameters": { "type": "object" },
+    "rationale": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" }
+  }
+}

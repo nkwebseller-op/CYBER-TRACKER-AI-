@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+:root {
+  --background: #05100a;
+  --surface: #0b1a12;
+  --surface-raised: #0f2318;
+  --border: #163826;
+  --foreground: #e6fbef;
+  --muted: #7ea690;
+  --accent: #34ff9c;
+  --accent-dim: #1f8f5c;
+  --danger: #ff5c5c;
+  --warning: #ffcf5c;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-border: var(--border);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-dim: var(--accent-dim);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+.glass {
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+}
+
+.glow-text {
+  text-shadow: 0 0 12px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.scanline {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--accent) 4%, transparent) 0px,
+    transparent 2px,
+    transparent 4px
+  );
+}

@@ -1,0 +1,19 @@
+{
+  "name": "cyber-ai-system",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Cyber AI System monorepo",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace apps/web",
+    "build:web": "npm run build --workspace apps/web",
+    "lint:web": "npm run lint --workspace apps/web",
+    "typecheck:web": "npm run typecheck --workspace apps/web"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

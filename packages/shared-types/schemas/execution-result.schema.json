@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://cyberai/schemas/execution-result.schema.json",
+  "title": "ExecutionResult",
+  "type": "object",
+  "required": ["id", "action_id", "adapter", "status", "started_at"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "action_id": { "type": "string", "format": "uuid" },
+    "adapter": { "type": "string", "enum": ["linux", "macos", "windows", "termux"] },
+    "status": { "type": "string", "enum": ["pending", "running", "succeeded", "failed", "recovering", "cancelled"] },
+    "exit_code": { "type": ["integer", "null"] },
+    "stdout": { "type": ["string", "null"] },
+    "stderr": { "type": ["string", "null"] },
+    "started_at": { "type": "string", "format": "date-time" },
+    "finished_at": { "type": ["string", "null"], "format": "date-time" }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://cyberai/schemas/policy-decision.schema.json",
+  "title": "PolicyDecision",
+  "type": "object",
+  "required": ["id", "action_id", "verdict", "reasons", "requires_approval", "decided_at"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "action_id": { "type": "string", "format": "uuid" },
+    "verdict": { "type": "string", "enum": ["ALLOW", "DENY", "REQUIRE_APPROVAL"] },
+    "reasons": { "type": "array", "items": { "type": "string" } },
+    "requires_approval": { "type": "boolean" },
+    "approved_by_user_id": { "type": ["string", "null"], "format": "uuid" },
+    "approved_at": { "type": ["string", "null"], "format": "date-time" },
+    "decided_at": { "type": "string", "format": "date-time" }
+  }
+}
