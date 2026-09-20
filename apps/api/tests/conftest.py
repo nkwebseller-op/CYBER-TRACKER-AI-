@@ -5,10 +5,10 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-import pytest
-from httpx import ASGITransport, AsyncClient
+import pytest  # noqa: E402
+from httpx import ASGITransport, AsyncClient  # noqa: E402
 
-from app.main import app
+from app.main import app  # noqa: E402
 
 
 @pytest.fixture

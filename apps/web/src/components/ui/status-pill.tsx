@@ -1,4 +1,4 @@
-type StatusState = "ok" | "degraded" | "down" | "unknown";
+export type StatusState = "ok" | "degraded" | "down" | "unknown";
 
 const STATE_STYLES: Record<StatusState, string> = {
   ok: "bg-accent",

@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from services.policy.engine import ActionRequest, PolicyEngine, PolicyVerdict, RiskTier, TargetScope
 
@@ -26,7 +26,7 @@ def test_denies_when_target_expired():
         action_id=uuid.uuid4(),
         action_type="recon.dns_lookup",
         risk_tier=RiskTier.LOW,
-        target=_target(expires_at=datetime.now(timezone.utc) - timedelta(days=1)),
+        target=_target(expires_at=datetime.now(UTC) - timedelta(days=1)),
     )
     decision = engine.evaluate(request)
     assert decision.verdict == PolicyVerdict.DENY

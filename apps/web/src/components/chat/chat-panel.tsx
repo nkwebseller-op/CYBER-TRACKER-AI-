@@ -9,19 +9,19 @@ import { ErrorBanner } from "@/components/chat/error-banner";
 import { MessageList } from "@/components/chat/message-list";
 import { TaskPlanPreview } from "@/components/chat/task-plan-preview";
 import { createChatEventBus } from "@/lib/chat/event-bus";
+import { getChatService } from "@/lib/chat/get-chat-service";
 import { generateLocalId } from "@/lib/chat/id";
-import { MockChatService } from "@/lib/chat/chat-service";
 import type { ChatMessage, TaskPlan } from "@/types/chat";
 import { ChatServiceError } from "@/types/chat";
 
 /**
- * Phase 3: the AI Command Center. `chatService` is the only seam between
- * this component and "the backend" — see lib/chat/chat-service.ts. Swap
- * MockChatService for an HTTP-backed implementation of the same
- * ChatService interface when POST /api/chat/message exists; nothing in
- * this component needs to change.
+ * The AI Command Center. `chatService` is the only seam between this
+ * component and "the backend" — see lib/chat/get-chat-service.ts. It
+ * resolves to the local mock by default and to the real
+ * POST /api/chat/message backend when NEXT_PUBLIC_CHAT_PROVIDER=http;
+ * nothing in this component needs to change either way.
  */
-const chatService = new MockChatService();
+const chatService = getChatService();
 const eventBus = createChatEventBus();
 
 function createConversationId(): string {

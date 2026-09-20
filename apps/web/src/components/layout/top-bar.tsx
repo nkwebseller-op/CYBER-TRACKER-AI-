@@ -3,6 +3,7 @@
 import { Activity, Menu } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { NAV_ITEMS } from "@/lib/nav";
+import { useSystemStatus } from "@/lib/use-system-status";
 import { StatusPill } from "@/components/ui/status-pill";
 
 export function TopBar({
@@ -18,6 +19,7 @@ export function TopBar({
   const current = NAV_ITEMS.find(
     (item) => pathname === item.href || pathname.startsWith(`${item.href}/`)
   );
+  const systemStatus = useSystemStatus();
 
   return (
     <header className="glass flex h-14 flex-shrink-0 items-center justify-between gap-3 border-b border-border px-4 sm:px-6">
@@ -37,9 +39,9 @@ export function TopBar({
 
       <div className="flex items-center gap-2 sm:gap-3">
         <div className="hidden items-center gap-2 lg:flex">
-          <StatusPill label="API" state="unknown" />
-          <StatusPill label="AI Provider" state="unknown" />
-          <StatusPill label="Database" state="unknown" />
+          <StatusPill label="API" state={systemStatus.api} />
+          <StatusPill label="AI Provider" state={systemStatus.aiProvider} />
+          <StatusPill label="Database" state={systemStatus.database} />
         </div>
         <button
           onClick={onActivityClick}
