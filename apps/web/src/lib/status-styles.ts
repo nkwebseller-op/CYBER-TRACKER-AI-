@@ -9,6 +9,7 @@ import type {
   ToolInstallStatus,
   ToolProvenance,
 } from "@/types/dashboard";
+import type { RiskLevel, TrustStatus } from "@/types/tools";
 
 export const AGENT_STATE_TONE: Record<AgentState, BadgeTone> = {
   ONLINE: "accent",
@@ -73,4 +74,21 @@ export const TOOL_PROVENANCE_TONE: Record<ToolProvenance, BadgeTone> = {
   verified_vendor: "info",
   package_manager: "neutral",
   unverified: "warning",
+};
+
+export const TRUST_STATUS_TONE: Record<TrustStatus, BadgeTone> = {
+  unknown: "neutral",
+  discovered: "neutral",
+  under_review: "info",
+  verified: "info",
+  approved: "accent",
+  blocked: "danger",
+  deprecated: "danger",
+};
+
+export const RISK_LEVEL_TONE: Record<RiskLevel, BadgeTone> = {
+  low: "accent",
+  medium: "info",
+  high: "warning",
+  critical: "danger",
 };

@@ -7,7 +7,7 @@ in the API layer deletes them. That's what makes the audit trail meaningful.
 """
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import StrEnum
 
 from sqlalchemy import Enum as SAEnum
@@ -197,6 +197,92 @@ class Report(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     task_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("tasks.id"))
     title: Mapped[str] = mapped_column(String(255))
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class ToolCategory(StrEnum):
+    NETWORK_DIAGNOSTICS = "network_diagnostics"
+    WEB_API_TESTING = "web_api_testing"
+    VULNERABILITY_ASSESSMENT = "vulnerability_assessment"
+    DNS_DOMAIN_ANALYSIS = "dns_domain_analysis"
+    INFRASTRUCTURE_DIAGNOSTICS = "infrastructure_diagnostics"
+    CLOUD_SECURITY = "cloud_security"
+    MOBILE_SECURITY = "mobile_security"
+    WIRELESS_DIAGNOSTICS = "wireless_diagnostics"
+    PACKET_TRAFFIC_ANALYSIS = "packet_traffic_analysis"
+    LOG_ANALYSIS = "log_analysis"
+    SYSTEM_DIAGNOSTICS = "system_diagnostics"
+    DEFENSIVE_MONITORING = "defensive_monitoring"
+    OSINT = "osint"
+    DEVELOPER_UTILITIES = "developer_utilities"
+
+
+class ToolSourceType(StrEnum):
+    OFFICIAL_WEBSITE = "official_website"
+    OFFICIAL_GITHUB = "official_github"
+    OFFICIAL_PACKAGE_REGISTRY = "official_package_registry"
+    OTHER_REPUTABLE = "other_reputable"
+    UNKNOWN = "unknown"
+
+
+class ToolTrustStatus(StrEnum):
+    UNKNOWN = "unknown"
+    DISCOVERED = "discovered"
+    UNDER_REVIEW = "under_review"
+    VERIFIED = "verified"
+    APPROVED = "approved"
+    BLOCKED = "blocked"
+    DEPRECATED = "deprecated"
+
+
+class ToolApprovalRequirement(StrEnum):
+    NONE = "none"
+    USER_APPROVAL = "user_approval"
+    ADMIN_APPROVAL = "admin_approval"
+
+
+class Tool(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    """A Trusted Tool Registry entry — discovery/verification metadata
+    only. This table never stores a downloadable binary or grants
+    execution: `entrypoint`/`installation_method` are descriptive, and
+    actually running anything registered here still goes through the
+    unchanged TerminalEngine + PolicyEngine (see services/tools/policy.py
+    for why trust status alone is never authorization)."""
+
+    __tablename__ = "tools"
+
+    name: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    display_name: Mapped[str] = mapped_column(String(255))
+    description: Mapped[str] = mapped_column(Text)
+    category: Mapped[ToolCategory] = mapped_column(SAEnum(ToolCategory, name="tool_category"))
+    capabilities: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    supported_platforms: Mapped[list[str]] = mapped_column(JSONB, default=list)
+
+    source_type: Mapped[ToolSourceType] = mapped_column(
+        SAEnum(ToolSourceType, name="tool_source_type")
+    )
+    source_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    documentation_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    repository_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    publisher: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    version: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    license: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    installation_method: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    entrypoint: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    dependencies: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    required_permissions: Mapped[list[str]] = mapped_column(JSONB, default=list)
+
+    risk_level: Mapped[RiskTier] = mapped_column(SAEnum(RiskTier, name="risk_tier"))
+    approval_requirement: Mapped[ToolApprovalRequirement] = mapped_column(
+        SAEnum(ToolApprovalRequirement, name="tool_approval_requirement"),
+        default=ToolApprovalRequirement.USER_APPROVAL,
+    )
+    trust_status: Mapped[ToolTrustStatus] = mapped_column(
+        SAEnum(ToolTrustStatus, name="tool_trust_status"), default=ToolTrustStatus.DISCOVERED
+    )
+    verification_report: Mapped[dict] = mapped_column(JSONB, default=dict)
+    discovered_version: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    discovered_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(UTC))
 
     findings: Mapped[list["Finding"]] = relationship(back_populates="report")
 
