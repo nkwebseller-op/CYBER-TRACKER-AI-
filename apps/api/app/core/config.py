@@ -55,6 +55,9 @@ class Settings(BaseSettings):
     terminal_max_stderr_bytes: int = Field(default=1_000_000)
     terminal_session_ttl_seconds: int = Field(default=900)
     terminal_max_concurrent_sessions: int = Field(default=20)
+    # None means auto-detect (prefers `pwsh`, falls back to `powershell.exe`)
+    # — see services/terminal/adapters/windows.py.
+    terminal_windows_powershell_path: str | None = Field(default=None)
 
     @property
     def cors_origins(self) -> list[str]:

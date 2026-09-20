@@ -2,12 +2,12 @@
 
 from services.terminal.adapters.base import TerminalAdapter
 from services.terminal.errors import UnsupportedPlatformError
-from services.terminal.platform_types import PlatformIdentifier, detect_platform, is_termux
+from services.terminal.platform_types import PlatformIdentifier, detect_platform, is_termux, is_wsl
 
-__all__ = ["is_termux", "select_adapter"]
+__all__ = ["is_termux", "is_wsl", "select_adapter"]
 
 
-def select_adapter() -> TerminalAdapter:
+def select_adapter(*, windows_powershell_path: str | None = None) -> TerminalAdapter:
     identifier = detect_platform()
 
     if identifier == PlatformIdentifier.ANDROID_TERMUX:
@@ -23,8 +23,8 @@ def select_adapter() -> TerminalAdapter:
 
         return MacOSAdapter()
     if identifier == PlatformIdentifier.WINDOWS:
-        from services.terminal.adapters.windows import WindowsAdapter
+        from services.terminal.adapters.windows import WindowsTerminalAdapter
 
-        return WindowsAdapter()
+        return WindowsTerminalAdapter(powershell_path=windows_powershell_path)
 
     raise UnsupportedPlatformError(f"Unsupported platform: {identifier!r}")

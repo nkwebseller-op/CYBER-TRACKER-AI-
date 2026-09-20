@@ -24,6 +24,13 @@ class TerminalEngineConfig:
 
     env_allowlist: tuple[str, ...] = DEFAULT_ENV_ALLOWLIST
 
+    # Windows-specific: PowerShell executable path override. None means
+    # "auto-detect" (see services.terminal.adapters.windows.resolve_powershell_executable) —
+    # every other Windows-adapter setting (timeouts, output caps, workspace
+    # root, session limits) reuses the fields above rather than duplicating
+    # them, per the "centralized configuration" requirement.
+    windows_powershell_path: str | None = None
+
     def clamp_timeout(self, requested_seconds: int | None) -> int:
         if requested_seconds is None:
             return self.default_timeout_seconds

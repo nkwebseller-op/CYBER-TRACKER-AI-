@@ -36,7 +36,7 @@ router = APIRouter(prefix="/terminal", tags=["terminal"])
 _policy_engine = PolicyEngine()
 
 
-def _session_response(session) -> SessionResponse:
+def _session_response(session, engine: TerminalEngine) -> SessionResponse:
     return SessionResponse(
         id=session.id,
         platform=session.platform,
@@ -45,6 +45,7 @@ def _session_response(session) -> SessionResponse:
         last_activity_at=session.last_activity_at,
         working_directory=session.working_directory,
         task_id=session.task_id,
+        shell=engine.describe_adapter()["shell"],
     )
 
 
@@ -77,7 +78,7 @@ async def create_session(
     except TerminalEngineError as exc:
         detail = {"code": exc.code, "message": str(exc)}
         raise HTTPException(status_code=400, detail=detail) from exc
-    return _session_response(session)
+    return _session_response(session, engine)
 
 
 @router.get("/sessions/{session_id}", response_model=SessionResponse)
@@ -89,7 +90,7 @@ async def get_session(
     except TerminalEngineError as exc:
         detail = {"code": exc.code, "message": str(exc)}
         raise HTTPException(status_code=404, detail=detail) from exc
-    return _session_response(session)
+    return _session_response(session, engine)
 
 
 @router.post("/sessions/{session_id}/terminate", response_model=SessionResponse)
@@ -101,7 +102,7 @@ async def terminate_session(
     except TerminalEngineError as exc:
         detail = {"code": exc.code, "message": str(exc)}
         raise HTTPException(status_code=404, detail=detail) from exc
-    return _session_response(session)
+    return _session_response(session, engine)
 
 
 @router.get("/sessions/{session_id}/output", response_model=CommandResultResponse | None)

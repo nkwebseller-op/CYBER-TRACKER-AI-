@@ -28,6 +28,9 @@ export interface TerminalSessionInfo {
   lastActivityAt: string;
   workingDirectory: string | null;
   taskId: string | null;
+  /** Populated for platforms with a distinct shell (currently: Windows ->
+   * "POWERSHELL" or "UNAVAILABLE"). Null for Linux/macOS/Termux. */
+  shell: string | null;
 }
 
 export async function createTerminalSession(taskId?: string): Promise<TerminalSessionInfo> {

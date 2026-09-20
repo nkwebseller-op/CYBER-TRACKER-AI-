@@ -7,6 +7,7 @@ TerminalEngine (harmless commands only, per services/terminal/command_templates.
 from uuid import uuid4
 
 import pytest
+from services.terminal.adapters.windows import WindowsTerminalAdapter
 from services.terminal.engine import TerminalEngine
 
 from app.api.routes import terminal as terminal_routes
@@ -190,3 +191,23 @@ async def test_no_route_accepts_raw_command_text(client):
     assert "command" not in fields
     assert "argv" not in fields
     assert "shell" not in fields
+
+
+async def test_session_reports_windows_platform_and_shell(client, monkeypatch):
+    windows_engine = TerminalEngine(adapter=WindowsTerminalAdapter())
+    app.dependency_overrides[get_terminal_engine] = lambda: windows_engine
+    monkeypatch.setattr("shutil.which", lambda name: "/usr/bin/pwsh" if name == "pwsh" else None)
+
+    response = await client.post("/api/terminal/sessions", json={})
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["platform"] == "WINDOWS"
+    assert body["shell"] == "POWERSHELL"
+
+
+async def test_session_shell_is_null_for_non_windows_platform(client):
+    response = await client.post("/api/terminal/sessions", json={})
+
+    assert response.status_code == 201
+    assert response.json()["shell"] is None

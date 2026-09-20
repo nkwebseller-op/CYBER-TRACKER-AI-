@@ -89,12 +89,44 @@ class TerminalEngine:
     ) -> TerminalSession:
         adapter = self._resolve_adapter()
         platform = self._platform_of(adapter)
-        return self._sessions.create_session(
+        session = self._sessions.create_session(
             platform=platform, task_id=task_id, working_directory=working_directory
         )
+        if platform == PlatformIdentifier.WINDOWS:
+            # In addition to the generic terminal.session.created event
+            # (emitted by SessionManager) — see adapters/windows.py for why
+            # Windows gets its own event namespace. Imported locally so the
+            # platform-independent engine doesn't take a module-level
+            # dependency on a specific adapter.
+            from services.terminal.adapters.windows import WINDOWS_SESSION_CREATED
+
+            self._audit.emit(
+                AuditEvent(
+                    event_type=WINDOWS_SESSION_CREATED,
+                    session_id=str(session.id),
+                    command_id=None,
+                    task_id=task_id,
+                )
+            )
+        return session
 
     def get_status(self, session_id: UUID) -> TerminalSession:
         return self._sessions.get_session(session_id)
+
+    def describe_adapter(self) -> dict:
+        """Platform-independent capability summary for the currently
+        selected adapter — used by the API to tell the frontend e.g.
+        "shell: POWERSHELL" without the route layer depending on any
+        specific adapter class. Adapters that don't expose
+        `get_capabilities()` (Linux/macOS/Termux, unchanged from Phase 5)
+        just report their platform with `shell=None`."""
+        adapter = self._resolve_adapter()
+        platform = self._platform_of(adapter)
+        get_capabilities = getattr(adapter, "get_capabilities", None)
+        if get_capabilities is None:
+            return {"platform": platform, "shell": None}
+        capabilities = get_capabilities()
+        return {"platform": platform, "shell": capabilities.shell}
 
     def close_session(self, session_id: UUID) -> TerminalSession:
         return self._sessions.close_session(session_id)
@@ -149,7 +181,14 @@ class TerminalEngine:
 
         adapter = self._resolve_adapter()
         session.status = SessionStatus.RUNNING
-        task = asyncio.ensure_future(adapter.run(approved.command))
+        run_context = {
+            "session_id": str(request.session_id),
+            "command_id": str(request.id),
+            "task_id": request.task_id,
+        }
+        task = asyncio.ensure_future(
+            adapter.run(approved.command, audit=self._audit, context=run_context)
+        )
         self._running[request.id] = task
         self._emit(COMMAND_STARTED, request)
 
@@ -198,7 +237,9 @@ class TerminalEngine:
     # --- internals -------------------------------------------------------
 
     def _resolve_adapter(self) -> TerminalAdapter:
-        return self._adapter_override or select_adapter()
+        if self._adapter_override:
+            return self._adapter_override
+        return select_adapter(windows_powershell_path=self._config.windows_powershell_path)
 
     @staticmethod
     def _platform_of(adapter: TerminalAdapter) -> PlatformIdentifier:

@@ -29,6 +29,10 @@ class SessionResponse(BaseModel):
     last_activity_at: datetime = Field(alias="lastActivityAt")
     working_directory: str | None = Field(default=None, alias="workingDirectory")
     task_id: str | None = Field(default=None, alias="taskId")
+    # Populated only when the resolved adapter exposes shell capabilities
+    # (currently: Windows -> "POWERSHELL"/"UNAVAILABLE"). None for
+    # Linux/macOS/Termux, unchanged from Phase 5.
+    shell: str | None = None
 
     model_config = ConfigDict(populate_by_name=True)
 

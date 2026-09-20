@@ -17,6 +17,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
 
+from services.terminal.audit import AuditSink
+
 
 class ExecutionStatus(StrEnum):
     PENDING = "pending"
@@ -61,6 +63,16 @@ class TerminalAdapter(ABC):
     name: str
 
     @abstractmethod
-    async def run(self, command: CommandSpec) -> ExecutionResult:
+    async def run(
+        self,
+        command: CommandSpec,
+        *,
+        audit: AuditSink | None = None,
+        context: dict | None = None,
+    ) -> ExecutionResult:
         """Execute the command and return its result. Must never invoke a
-        shell; argv is executed directly."""
+        shell; argv is executed directly. `audit`/`context` (session/
+        command/task ids) are optional — a subclass may use them to emit
+        its own platform-specific audit events (see
+        services/terminal/adapters/windows.py); the base implementation
+        ignores them."""

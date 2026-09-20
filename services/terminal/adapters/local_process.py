@@ -8,6 +8,14 @@ Phase 5: output is read incrementally (not buffered all at once via
 bounds memory regardless of how much a command actually writes — excess
 bytes are discarded, not stored, and the process is killed once a cap is
 exceeded rather than left to keep producing output nobody will see.
+
+Phase 6 fix: cancellation (the caller's asyncio.Task being cancelled, e.g.
+via TerminalEngine.terminate()) used to propagate `asyncio.CancelledError`
+straight out of `run()` without ever touching the child process — an
+orphaned process bug. `run()` now kills the process on cancellation too,
+via the same overridable `_terminate()` hook timeouts and output-limit
+kills already used, so a subclass (see adapters/windows.py) can plug in a
+platform-specific process-tree kill without duplicating the control flow.
 """
 
 import asyncio
@@ -20,6 +28,7 @@ from services.terminal.adapters.base import (
     ExecutionStatus,
     TerminalAdapter,
 )
+from services.terminal.audit import AuditSink
 
 _READ_CHUNK_SIZE = 65536
 
@@ -75,7 +84,17 @@ def _filtered_env(command: CommandSpec) -> dict[str, str]:
 
 
 class LocalProcessAdapter(TerminalAdapter):
-    async def run(self, command: CommandSpec) -> ExecutionResult:
+    async def run(
+        self,
+        command: CommandSpec,
+        *,
+        audit: AuditSink | None = None,
+        context: dict | None = None,
+    ) -> ExecutionResult:
+        """`audit`/`context` are accepted for interface compatibility with
+        subclasses that emit their own adapter-specific events (see
+        WindowsTerminalAdapter) — this base implementation doesn't use
+        them, so Linux/macOS/Termux behavior is unchanged."""
         started_at = datetime.now(UTC)
         env = _filtered_env(command)
 
@@ -110,13 +129,13 @@ class LocalProcessAdapter(TerminalAdapter):
         async def drain_and_wait() -> None:
             await asyncio.gather(stdout_reader.read_all(), stderr_reader.read_all())
             if stdout_reader.exceeded or stderr_reader.exceeded:
-                await _kill(process)
+                await self._terminate(process)
             await process.wait()
 
         try:
             await asyncio.wait_for(drain_and_wait(), timeout=command.timeout_seconds)
         except TimeoutError:
-            await _kill(process)
+            await self._terminate(process)
             return ExecutionResult(
                 adapter=self.name,
                 status=ExecutionStatus.FAILED,
@@ -128,6 +147,12 @@ class LocalProcessAdapter(TerminalAdapter):
                 started_at=started_at,
                 finished_at=datetime.now(UTC),
             )
+        except asyncio.CancelledError:
+            # The caller (TerminalEngine.terminate()) cancelled our task.
+            # Kill the child before letting the cancellation propagate —
+            # otherwise it keeps running with no one left awaiting it.
+            await self._terminate(process)
+            raise
 
         status = ExecutionStatus.SUCCEEDED if process.returncode == 0 else ExecutionStatus.FAILED
         return ExecutionResult(
@@ -142,12 +167,14 @@ class LocalProcessAdapter(TerminalAdapter):
             finished_at=datetime.now(UTC),
         )
 
-
-async def _kill(process: asyncio.subprocess.Process) -> None:
-    if process.returncode is not None:
-        return
-    try:
-        process.kill()
-        await process.wait()
-    except ProcessLookupError:
-        pass  # already exited between the check and the kill
+    async def _terminate(self, process: asyncio.subprocess.Process) -> None:
+        """Overridable kill hook — the default just kills the immediate
+        child. Platform adapters that can reasonably kill a whole process
+        tree (see WindowsTerminalAdapter) override this."""
+        if process.returncode is not None:
+            return
+        try:
+            process.kill()
+            await process.wait()
+        except ProcessLookupError:
+            pass  # already exited between the check and the kill

@@ -96,6 +96,11 @@ export function TerminalWindow() {
               <span className="text-muted">
                 Platform: <span className="text-muted-strong">{session.platform}</span>
               </span>
+              {session.shell && (
+                <span className="text-muted">
+                  Shell: <span className="text-muted-strong">{session.shell}</span>
+                </span>
+              )}
               <span className="hidden text-muted sm:inline">
                 Session: <span className="font-mono text-muted-strong">{session.id}</span>
               </span>
