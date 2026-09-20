@@ -1,53 +1,42 @@
-import { Card } from "@/components/ui/card";
+import { AgentStatusGrid } from "@/components/dashboard/agent-status-grid";
+import { ActivityFeed } from "@/components/dashboard/activity-feed";
+import { OverviewMetrics } from "@/components/dashboard/overview-metrics";
+import { WorkflowPipeline } from "@/components/dashboard/workflow-pipeline";
+import { TerminalLines } from "@/components/terminal/terminal-lines";
+import { Panel } from "@/components/ui/panel";
+import { PageHeader } from "@/components/ui/page-header";
+import {
+  MOCK_AGENT_STATUS,
+  MOCK_OVERVIEW_METRICS,
+  MOCK_RECENT_ACTIVITY,
+  MOCK_TERMINAL_PREVIEW,
+  MOCK_WORKFLOW_STAGES,
+} from "@/lib/mock";
 
 export default function DashboardPage() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-lg font-semibold text-foreground">Dashboard</h1>
-        <p className="text-sm text-muted">
-          System overview. Phase 1: no live executions or findings exist yet — the pipeline
-          shown below is wired at the architecture level, not yet driven by real data.
-        </p>
+      <PageHeader
+        title="Dashboard"
+        description="System overview across the authorization → execution pipeline. All data below is mock — no live executions exist in this phase."
+      />
+
+      <OverviewMetrics metrics={MOCK_OVERVIEW_METRICS} />
+
+      <WorkflowPipeline stages={MOCK_WORKFLOW_STAGES} />
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <AgentStatusGrid agents={MOCK_AGENT_STATUS} />
+        </div>
+        <Panel title="Recent Activity" subtitle="Latest pipeline events">
+          <ActivityFeed events={MOCK_RECENT_ACTIVITY} />
+        </Panel>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card title="Active Targets" subtitle="Authorized scope">
-          <p className="text-2xl font-semibold text-accent">0</p>
-        </Card>
-        <Card title="Running Tasks" subtitle="In progress">
-          <p className="text-2xl font-semibold text-accent">0</p>
-        </Card>
-        <Card title="Pending Approvals" subtitle="Policy gate">
-          <p className="text-2xl font-semibold text-warning">0</p>
-        </Card>
-        <Card title="Findings" subtitle="All reports">
-          <p className="text-2xl font-semibold text-accent">0</p>
-        </Card>
-      </div>
-
-      <Card title="Pipeline" subtitle="AI intent → policy → execution → report">
-        <ol className="grid grid-cols-2 gap-3 text-xs text-muted sm:grid-cols-4">
-          {[
-            "AI Orchestrator",
-            "Task Planner",
-            "Research Engine",
-            "Tool Intelligence",
-            "Policy Engine",
-            "Execution Controller",
-            "Result Analyzer",
-            "Report Engine",
-          ].map((stage, index) => (
-            <li
-              key={stage}
-              className="rounded-md border border-border bg-surface-raised px-3 py-2 text-foreground"
-            >
-              <span className="mr-1 font-mono text-accent">{index + 1}.</span>
-              {stage}
-            </li>
-          ))}
-        </ol>
-      </Card>
+      <Panel title="Terminal Activity Preview" subtitle="Read-only preview — no commands are executed in this phase">
+        <TerminalLines lines={MOCK_TERMINAL_PREVIEW} />
+      </Panel>
     </div>
   );
 }

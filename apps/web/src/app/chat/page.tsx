@@ -1,15 +1,14 @@
 import { ChatPanel } from "@/components/chat/chat-panel";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default function ChatPage() {
   return (
     <div className="flex h-full flex-col gap-4">
-      <div>
-        <h1 className="text-lg font-semibold text-foreground">Chat / Command Center</h1>
-        <p className="text-sm text-muted">
-          Natural-language entry point for authorized security objectives.
-        </p>
-      </div>
-      <div className="flex-1">
+      <PageHeader
+        title="Chat / Command Center"
+        description="Describe an authorized security objective in natural language. Phase 2 is UI-only — nothing here is planned or executed yet."
+      />
+      <div className="min-h-0 flex-1">
         <ChatPanel />
       </div>
     </div>

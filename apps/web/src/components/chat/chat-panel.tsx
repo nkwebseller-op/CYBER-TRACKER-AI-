@@ -1,75 +1,91 @@
 "use client";
 
 import { useState } from "react";
-import { postChat, type ChatMessage } from "@/lib/api";
+import { CommandInput } from "@/components/chat/command-input";
+import { ExecutionStatus } from "@/components/chat/execution-status";
+import { MessageList } from "@/components/chat/message-list";
+import { MOCK_CHAT_HISTORY } from "@/lib/mock";
+import type { ChatUIMessage, ExecutionIndicatorState } from "@/types/dashboard";
 
+let messageCounter = 0;
+function nextId(): string {
+  messageCounter += 1;
+  return `local-${messageCounter}`;
+}
+
+function nowLabel(): string {
+  return new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+}
+
+/**
+ * Phase 2 scope: this panel simulates the conversation with canned,
+ * locally-generated responses. It does not call the AI Orchestrator or
+ * any execution path — see docs/PHASE_1.md and services/agent for where
+ * the real orchestrator lives when this is wired up in a later phase.
+ */
 export function ChatPanel() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState("");
-  const [isSending, setIsSending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ChatUIMessage[]>(MOCK_CHAT_HISTORY);
+  const [executionState, setExecutionState] = useState<ExecutionIndicatorState>(
+    "awaiting_approval"
+  );
+  const [isThinking, setIsThinking] = useState(false);
 
-  async function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    const objective = input.trim();
-    if (!objective || isSending) return;
+  function handleSend(content: string) {
+    const userMessage: ChatUIMessage = {
+      id: nextId(),
+      role: "user",
+      content,
+      timestamp: nowLabel(),
+      status: "sent",
+    };
+    setMessages((prev) => [...prev, userMessage]);
+    setIsThinking(true);
+    setExecutionState("planning");
 
-    const nextMessages: ChatMessage[] = [...messages, { role: "user", content: objective }];
-    setMessages(nextMessages);
-    setInput("");
-    setIsSending(true);
-    setError(null);
+    window.setTimeout(() => {
+      const reply: ChatUIMessage = {
+        id: nextId(),
+        role: "assistant",
+        content:
+          "This is a simulated response for Phase 2 (UI only). Once the Task Planner is wired up, I'll turn this objective into a structured action and route it through the Policy Engine before anything can run.",
+        timestamp: nowLabel(),
+        status: "sent",
+      };
+      setMessages((prev) => [...prev, reply]);
+      setIsThinking(false);
+      setExecutionState("awaiting_approval");
+    }, 900);
+  }
 
-    try {
-      const response = await postChat(nextMessages);
-      setMessages([...nextMessages, { role: "assistant", content: response.reply }]);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Chat request failed.");
-    } finally {
-      setIsSending(false);
-    }
+  function handleStop() {
+    setIsThinking(false);
+    setExecutionState("stopped");
   }
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex-1 space-y-3 overflow-y-auto rounded-lg border border-border bg-surface p-4">
-        {messages.length === 0 && (
-          <p className="text-sm text-muted">
-            Describe an authorized security objective, e.g. &ldquo;Assess the security of my
-            authorized web server.&rdquo; This phase only holds a conversation — no actions are
-            planned or executed yet.
+    <div className="flex h-full flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted">
+          Simulated conversation — no objective is planned or executed yet.
+        </p>
+        <ExecutionStatus state={executionState} />
+      </div>
+
+      <div className="scrollbar-thin flex-1 space-y-3 overflow-y-auto rounded-lg border border-border bg-surface p-4">
+        <MessageList messages={messages} />
+        {isThinking && (
+          <p className="animate-fade-in-up text-xs text-muted" role="status">
+            AI Orchestrator is thinking…
           </p>
         )}
-        {messages.map((message, index) => (
-          <div
-            key={index}
-            className={
-              message.role === "user"
-                ? "ml-auto max-w-[80%] rounded-lg bg-accent-dim/30 px-3 py-2 text-sm text-foreground"
-                : "max-w-[80%] rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-foreground"
-            }
-          >
-            {message.content}
-          </div>
-        ))}
-        {isSending && <p className="text-xs text-muted">AI Orchestrator is thinking…</p>}
-        {error && <p className="text-xs text-danger">{error}</p>}
       </div>
-      <form onSubmit={handleSubmit} className="mt-3 flex gap-2">
-        <input
-          value={input}
-          onChange={(event) => setInput(event.target.value)}
-          placeholder="Describe your authorized objective…"
-          className="flex-1 rounded-md border border-border bg-surface-raised px-3 py-2 text-sm text-foreground outline-none focus:border-accent"
-        />
-        <button
-          type="submit"
-          disabled={isSending}
-          className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-background disabled:opacity-50"
-        >
-          Send
-        </button>
-      </form>
+
+      <CommandInput
+        onSubmit={handleSend}
+        disabled={isThinking}
+        isRunning={isThinking}
+        onStop={handleStop}
+      />
     </div>
   );
 }
