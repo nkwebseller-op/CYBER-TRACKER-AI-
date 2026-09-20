@@ -92,23 +92,38 @@ class TerminalEngine:
         session = self._sessions.create_session(
             platform=platform, task_id=task_id, working_directory=working_directory
         )
-        if platform == PlatformIdentifier.WINDOWS:
-            # In addition to the generic terminal.session.created event
-            # (emitted by SessionManager) — see adapters/windows.py for why
-            # Windows gets its own event namespace. Imported locally so the
-            # platform-independent engine doesn't take a module-level
-            # dependency on a specific adapter.
-            from services.terminal.adapters.windows import WINDOWS_SESSION_CREATED
-
+        # In addition to the generic terminal.session.created event
+        # (emitted by SessionManager) — platform adapters that define their
+        # own event namespace (see adapters/windows.py, adapters/linux.py)
+        # get a second, platform-specific event. Imported locally so the
+        # platform-independent engine doesn't take a module-level
+        # dependency on any specific adapter.
+        platform_session_event = {
+            PlatformIdentifier.WINDOWS: self._windows_session_created_event,
+            PlatformIdentifier.LINUX: self._linux_session_created_event,
+        }.get(platform)
+        if platform_session_event is not None:
             self._audit.emit(
                 AuditEvent(
-                    event_type=WINDOWS_SESSION_CREATED,
+                    event_type=platform_session_event(),
                     session_id=str(session.id),
                     command_id=None,
                     task_id=task_id,
                 )
             )
         return session
+
+    @staticmethod
+    def _windows_session_created_event() -> str:
+        from services.terminal.adapters.windows import WINDOWS_SESSION_CREATED
+
+        return WINDOWS_SESSION_CREATED
+
+    @staticmethod
+    def _linux_session_created_event() -> str:
+        from services.terminal.adapters.linux import LINUX_SESSION_CREATED
+
+        return LINUX_SESSION_CREATED
 
     def get_status(self, session_id: UUID) -> TerminalSession:
         return self._sessions.get_session(session_id)
@@ -239,7 +254,10 @@ class TerminalEngine:
     def _resolve_adapter(self) -> TerminalAdapter:
         if self._adapter_override:
             return self._adapter_override
-        return select_adapter(windows_powershell_path=self._config.windows_powershell_path)
+        return select_adapter(
+            windows_powershell_path=self._config.windows_powershell_path,
+            linux_shell_path=self._config.linux_shell_path,
+        )
 
     @staticmethod
     def _platform_of(adapter: TerminalAdapter) -> PlatformIdentifier:

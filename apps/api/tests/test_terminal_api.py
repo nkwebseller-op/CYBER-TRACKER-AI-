@@ -7,6 +7,8 @@ TerminalEngine (harmless commands only, per services/terminal/command_templates.
 from uuid import uuid4
 
 import pytest
+from services.terminal.adapters.linux import LinuxTerminalAdapter
+from services.terminal.adapters.macos import MacOSAdapter
 from services.terminal.adapters.windows import WindowsTerminalAdapter
 from services.terminal.engine import TerminalEngine
 
@@ -206,8 +208,26 @@ async def test_session_reports_windows_platform_and_shell(client, monkeypatch):
     assert body["shell"] == "POWERSHELL"
 
 
-async def test_session_shell_is_null_for_non_windows_platform(client):
+async def test_session_shell_is_null_for_platforms_without_shell_capabilities(client):
+    """macOS/Termux adapters don't implement get_capabilities() (unchanged
+    from Phase 5/6) — `shell` stays null for them, unlike Windows/Linux."""
+    macos_engine = TerminalEngine(adapter=MacOSAdapter())
+    app.dependency_overrides[get_terminal_engine] = lambda: macos_engine
+
     response = await client.post("/api/terminal/sessions", json={})
 
     assert response.status_code == 201
     assert response.json()["shell"] is None
+
+
+async def test_session_reports_linux_platform_and_shell(client, monkeypatch):
+    linux_engine = TerminalEngine(adapter=LinuxTerminalAdapter())
+    app.dependency_overrides[get_terminal_engine] = lambda: linux_engine
+    monkeypatch.setattr("shutil.which", lambda name: "/bin/bash" if name == "bash" else None)
+
+    response = await client.post("/api/terminal/sessions", json={})
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["platform"] == "LINUX"
+    assert body["shell"] == "/bin/bash"

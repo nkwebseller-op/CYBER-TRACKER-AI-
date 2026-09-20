@@ -58,6 +58,9 @@ class Settings(BaseSettings):
     # None means auto-detect (prefers `pwsh`, falls back to `powershell.exe`)
     # — see services/terminal/adapters/windows.py.
     terminal_windows_powershell_path: str | None = Field(default=None)
+    # None means auto-detect ($SHELL, then bash/sh) — informational only,
+    # see services/terminal/adapters/linux.py.
+    terminal_linux_shell_path: str | None = Field(default=None)
 
     @property
     def cors_origins(self) -> list[str]:

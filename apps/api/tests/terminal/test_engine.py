@@ -232,7 +232,20 @@ async def test_unsupported_platform_raises_from_adapter_selection(monkeypatch):
         select_adapter()
 
 
+_GENERIC_ENGINE_EVENTS = {
+    SESSION_CREATED,
+    COMMAND_REQUESTED,
+    COMMAND_APPROVED,
+    COMMAND_STARTED,
+    COMMAND_COMPLETED,
+}
+
+
 async def test_audit_events_recorded_in_order_for_successful_run():
+    """The engine's own (platform-independent) event sequence, filtered out
+    from whatever extra platform-specific events (e.g. linux.session.created
+    on this host, windows.* elsewhere) the auto-detected adapter also
+    emits — see test_linux_adapter.py / test_windows_adapter.py for those."""
     engine, sink = _engine()
     session = engine.create_session()
     request = TerminalCommandRequest(
@@ -243,7 +256,8 @@ async def test_audit_events_recorded_in_order_for_successful_run():
 
     await engine.execute(request)
 
-    assert sink.event_types == [
+    generic_events = [e for e in sink.event_types if e in _GENERIC_ENGINE_EVENTS]
+    assert generic_events == [
         SESSION_CREATED,
         COMMAND_REQUESTED,
         COMMAND_APPROVED,

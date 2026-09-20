@@ -7,7 +7,9 @@ from services.terminal.platform_types import PlatformIdentifier, detect_platform
 __all__ = ["is_termux", "is_wsl", "select_adapter"]
 
 
-def select_adapter(*, windows_powershell_path: str | None = None) -> TerminalAdapter:
+def select_adapter(
+    *, windows_powershell_path: str | None = None, linux_shell_path: str | None = None
+) -> TerminalAdapter:
     identifier = detect_platform()
 
     if identifier == PlatformIdentifier.ANDROID_TERMUX:
@@ -15,9 +17,9 @@ def select_adapter(*, windows_powershell_path: str | None = None) -> TerminalAda
 
         return TermuxAdapter()
     if identifier == PlatformIdentifier.LINUX:
-        from services.terminal.adapters.linux import LinuxAdapter
+        from services.terminal.adapters.linux import LinuxTerminalAdapter
 
-        return LinuxAdapter()
+        return LinuxTerminalAdapter(shell_path=linux_shell_path)
     if identifier == PlatformIdentifier.MACOS:
         from services.terminal.adapters.macos import MacOSAdapter
 

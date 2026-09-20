@@ -26,5 +26,6 @@ def get_terminal_engine() -> TerminalEngine:
         session_ttl_seconds=settings.terminal_session_ttl_seconds,
         max_concurrent_sessions=settings.terminal_max_concurrent_sessions,
         windows_powershell_path=settings.terminal_windows_powershell_path,
+        linux_shell_path=settings.terminal_linux_shell_path,
     )
     return TerminalEngine(config=config)

@@ -105,6 +105,7 @@ class LocalProcessAdapter(TerminalAdapter):
                 env=env,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
+                **self._process_creation_kwargs(),
             )
         except FileNotFoundError as exc:
             return ExecutionResult(
@@ -166,6 +167,14 @@ class LocalProcessAdapter(TerminalAdapter):
             started_at=started_at,
             finished_at=datetime.now(UTC),
         )
+
+    def _process_creation_kwargs(self) -> dict:
+        """Overridable hook for extra `create_subprocess_exec` kwargs — e.g.
+        LinuxTerminalAdapter sets `start_new_session=True` so it can kill a
+        command's whole process group without ever touching this process's
+        own group. The default adds nothing (unchanged pre-Phase-7
+        behavior)."""
+        return {}
 
     async def _terminate(self, process: asyncio.subprocess.Process) -> None:
         """Overridable kill hook — the default just kills the immediate
