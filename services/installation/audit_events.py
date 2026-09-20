@@ -1,0 +1,21 @@
+"""Audit event type names for Tool Installation & Environment Preparation
+— same services.terminal.audit.AuditEvent/AuditSink machinery used by
+every other subsystem. Never carries a secret or a fabricated result."""
+
+INSTALL_REQUESTED = "install.requested"
+INSTALL_PLAN_GENERATED = "install.plan_generated"
+INSTALL_READINESS_CHECKED = "install.readiness_checked"
+INSTALL_APPROVED = "install.approved"
+INSTALL_REJECTED = "install.rejected"
+INSTALL_STARTED = "install.started"
+INSTALL_STEP_STARTED = "install.step_started"
+INSTALL_STEP_COMPLETED = "install.step_completed"
+INSTALL_STEP_FAILED = "install.step_failed"
+INSTALL_VERIFYING = "install.verifying"
+INSTALL_VERIFIED = "install.verified"
+INSTALL_VERIFICATION_FAILED = "install.verification_failed"
+INSTALL_COMPLETED = "install.completed"
+INSTALL_FAILED = "install.failed"
+INSTALL_CANCELLED = "install.cancelled"
+INSTALL_BLOCKED = "install.blocked"
+INSTALL_ROLLBACK_REQUIRED = "install.rollback_required"

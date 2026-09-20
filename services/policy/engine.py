@@ -71,8 +71,18 @@ class PolicyDecision:
 
 
 # Registry of action types reviewed and approved for execution. See module
-# docstring for why "diagnostics.echo_test" is the sole entry.
-REGISTERED_ACTION_TYPES: frozenset[str] = frozenset({"diagnostics.echo_test"})
+# docstring for why "diagnostics.echo_test" is the original entry. Phase 11
+# adds the two Tool Installation action types (services/terminal/
+# command_templates.py: build_install_command/build_verification_command) —
+# reviewed the same way: the *template logic* is vetted here, never raw
+# text from a user, the AI, or a tool's self-reported metadata.
+REGISTERED_ACTION_TYPES: frozenset[str] = frozenset(
+    {
+        "diagnostics.echo_test",
+        "tool_install.package_manager_install",
+        "tool_install.package_manager_verify",
+    }
+)
 
 
 class PolicyEngine:

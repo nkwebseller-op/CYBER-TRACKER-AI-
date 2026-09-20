@@ -198,6 +198,8 @@ class Report(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     title: Mapped[str] = mapped_column(String(255))
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    findings: Mapped[list["Finding"]] = relationship(back_populates="report")
+
 
 class ToolCategory(StrEnum):
     NETWORK_DIAGNOSTICS = "network_diagnostics"
@@ -284,8 +286,6 @@ class Tool(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     discovered_version: Mapped[str | None] = mapped_column(String(100), nullable=True)
     discovered_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(UTC))
 
-    findings: Mapped[list["Finding"]] = relationship(back_populates="report")
-
 
 class Finding(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "findings"
@@ -297,3 +297,86 @@ class Finding(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     evidence: Mapped[dict] = mapped_column(JSONB, default=dict)
 
     report: Mapped["Report"] = relationship(back_populates="findings")
+
+
+class InstallationState(StrEnum):
+    DISCOVERED = "DISCOVERED"
+    REVIEWING = "REVIEWING"
+    DEPENDENCIES_CHECKING = "DEPENDENCIES_CHECKING"
+    WAITING_FOR_APPROVAL = "WAITING_FOR_APPROVAL"
+    PREPARING = "PREPARING"
+    INSTALLING = "INSTALLING"
+    VERIFYING = "VERIFYING"
+    INSTALLED = "INSTALLED"
+    FAILED = "FAILED"
+    BLOCKED = "BLOCKED"
+    CANCELLED = "CANCELLED"
+    ROLLBACK_REQUIRED = "ROLLBACK_REQUIRED"
+
+
+class InstallationRequestRecord(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    """A Phase 11 installation request. `plan` and `verification` are
+    stored as JSON snapshots (mirroring services.installation.models.
+    InstallationPlan / InstallationVerification) rather than normalized
+    further — they are point-in-time records of what was proposed/found,
+    not live-editable entities."""
+
+    __tablename__ = "installation_requests"
+
+    tool_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("tools.id"))
+    target_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("targets.id"), nullable=True)
+    session_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
+    requested_by: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    state: Mapped[InstallationState] = mapped_column(
+        SAEnum(InstallationState, name="installation_state"),
+        default=InstallationState.DISCOVERED,
+    )
+    plan: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    approved_by: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    approved_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    rejection_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    verification: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    attempts: Mapped[list["InstallationAttemptRecord"]] = relationship(
+        back_populates="request", order_by="InstallationAttemptRecord.attempt_number"
+    )
+
+
+class InstallationAttemptRecord(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    """One row per install-step attempt — never stores raw environment
+    variables, only the captured stdout/stderr previews (already
+    length-capped by services.terminal.audit.truncate_for_log before
+    they reach this table)."""
+
+    __tablename__ = "installation_attempts"
+
+    request_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("installation_requests.id"))
+    attempt_number: Mapped[int]
+    started_at: Mapped[datetime]
+    completed_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    exit_code: Mapped[int | None] = mapped_column(nullable=True)
+    stdout: Mapped[str | None] = mapped_column(Text, nullable=True)
+    stderr: Mapped[str | None] = mapped_column(Text, nullable=True)
+    duration_seconds: Mapped[float | None] = mapped_column(nullable=True)
+    error_category: Mapped[str | None] = mapped_column(String(100), nullable=True)
+
+    request: Mapped["InstallationRequestRecord"] = relationship(back_populates="attempts")
+
+
+class InstalledTool(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    """A successfully installed & verified tool, one row per (tool,
+    platform) installation — the durable record `GET /api/installations/
+    installed` reads from. Never stores a secret or credential; only
+    version/verification metadata."""
+
+    __tablename__ = "installed_tools"
+
+    tool_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("tools.id"))
+    installation_request_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("installation_requests.id")
+    )
+    platform: Mapped[str] = mapped_column(String(50))
+    package_manager: Mapped[str] = mapped_column(String(50))
+    installed_version: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    verification: Mapped[dict] = mapped_column(JSONB, default=dict)

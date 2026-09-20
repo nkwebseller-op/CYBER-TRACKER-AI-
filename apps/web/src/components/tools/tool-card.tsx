@@ -1,9 +1,16 @@
+"use client";
+
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ToolInstallDialog } from "@/components/tools/tool-install-dialog";
 import { RISK_LEVEL_TONE, TRUST_STATUS_TONE } from "@/lib/status-styles";
 import { titleCase } from "@/lib/format";
 import type { RegistryTool } from "@/types/tools";
 
 export function ToolCard({ tool }: { tool: RegistryTool }) {
+  const [installOpen, setInstallOpen] = useState(false);
+
   return (
     <div className="motion-safe-transition flex flex-col gap-3 rounded-md border border-border bg-surface-raised/50 p-4 hover:border-border-strong">
       <div className="flex items-start justify-between gap-2">
@@ -44,6 +51,16 @@ export function ToolCard({ tool }: { tool: RegistryTool }) {
         </span>
         <Badge tone={RISK_LEVEL_TONE[tool.riskLevel]}>{titleCase(tool.riskLevel)} risk</Badge>
       </div>
+
+      {tool.trustStatus === "approved" && tool.supportedPlatforms.length > 0 && (
+        <Button size="sm" variant="secondary" onClick={() => setInstallOpen(true)}>
+          Install…
+        </Button>
+      )}
+
+      {installOpen && (
+        <ToolInstallDialog tool={tool} isOpen={installOpen} onClose={() => setInstallOpen(false)} />
+      )}
     </div>
   );
 }
