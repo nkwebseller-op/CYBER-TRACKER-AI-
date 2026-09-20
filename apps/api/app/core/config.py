@@ -65,6 +65,10 @@ class Settings(BaseSettings):
     # only, see services/terminal/adapters/macos.py.
     terminal_macos_shell_path: str | None = Field(default=None)
 
+    # --- Termux connector (see services/termux/config.py) ---
+    termux_pairing_code_ttl_seconds: int = Field(default=300)
+    termux_max_registered_devices: int = Field(default=50)
+
     @property
     def cors_origins(self) -> list[str]:
         return [origin.strip() for origin in self.api_cors_origins.split(",") if origin.strip()]

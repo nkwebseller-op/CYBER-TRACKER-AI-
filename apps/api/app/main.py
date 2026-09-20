@@ -23,7 +23,9 @@ from app.api.router import api_router  # noqa: E402
 from app.core.config import get_settings  # noqa: E402
 from app.core.errors import CyberAIError, cyberai_error_handler  # noqa: E402
 from app.core.logging import configure_logging, get_logger  # noqa: E402
+from app.core.termux import get_connection_manager  # noqa: E402
 from app.ws.gateway import websocket_endpoint  # noqa: E402
+from app.ws.termux_gateway import termux_websocket_endpoint  # noqa: E402
 
 configure_logging()
 logger = get_logger(__name__)
@@ -58,3 +60,8 @@ app.include_router(api_router)
 @app.websocket("/ws")
 async def ws_endpoint(websocket: WebSocket) -> None:
     await websocket_endpoint(websocket)
+
+
+@app.websocket("/ws/termux")
+async def termux_ws_endpoint(websocket: WebSocket) -> None:
+    await termux_websocket_endpoint(websocket, get_connection_manager())
