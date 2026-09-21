@@ -23,6 +23,8 @@ android {
         buildConfigField("String", "DASHBOARD_URL", "\"$dashboardUrl\"")
     }
 
+    setProperty("archivesBaseName", "CyberAISystem-v0.1.0")
+
     buildFeatures {
         viewBinding = true
         buildConfig = true
