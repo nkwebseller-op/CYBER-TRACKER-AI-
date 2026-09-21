@@ -28,8 +28,12 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      # ubuntu-latest GitHub-hosted runners ship a pre-installed, license-
+      # accepted Android SDK (ANDROID_HOME/ANDROID_SDK_ROOT already set) —
+      # no separate setup-android step needed, and that action was failing
+      # here on non-interactive license acceptance.
+      - name: Confirm Android SDK is available
+        run: echo "ANDROID_HOME=$ANDROID_HOME" && ls "$ANDROID_HOME"
 
       - name: Regenerate Gradle wrapper JAR
         run: gradle wrapper --gradle-version 8.7 --distribution-type bin
