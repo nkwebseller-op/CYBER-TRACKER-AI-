@@ -122,6 +122,7 @@ class AgentOrchestrator:
         analyzer: ResultAnalyzer | None = None,
         verifier: VerificationEngine | None = None,
         report_builder: ReportBuilder | None = None,
+        self_healing_engine=None,
     ) -> None:
         self._registry = registry
         self._events = event_bus
@@ -139,6 +140,12 @@ class AgentOrchestrator:
         self._reports = report_builder or ReportBuilder()
         self._adaptation = AdaptationEngine(self._budget)
         self._classifier = ErrorClassifier()
+        # Optional Phase 13 upgrade: if provided, a failed action goes
+        # through DiagnosisEngine + HealingPlanner in addition to the
+        # simpler AdaptationEngine, and the proposal is stored on the
+        # task's recovery attempts. Never applied automatically — it's
+        # informational until a human or a future controller acts on it.
+        self._self_healing = self_healing_engine
 
     def _emit(self, state: AgentTaskState, event_type: str, data: dict) -> None:
         self._events.publish(AgentEvent(task_id=state.id, event_type=event_type, data=data))
@@ -575,6 +582,34 @@ class AgentOrchestrator:
         state.errors.append(
             AgentError(action_id=action.id, category=category_value, message=failure.message)
         )
+
+        # Phase 13: if a SelfHealingEngine was injected, get a proposal
+        # and stash the suggested strategy on the task's recovery
+        # attempts. Never applied automatically — it's a hint for the
+        # AdaptationEngine below (which still decides retry/ask/fail) and
+        # for the operator UI.
+        if self._self_healing is not None:
+            try:
+                from services.self_healing.diagnosis import FailureSignals
+
+                proposal = self._self_healing.heal(
+                    task_id=state.id,
+                    action_id=action.id,
+                    signals=FailureSignals(
+                        stderr=failure.message,
+                        error_category=category_value,
+                        policy_denied=(category_value == "policy_restriction"),
+                    ),
+                )
+                state.recovery_attempts.append(
+                    RecoveryAttempt(
+                        action_id=action.id,
+                        error_category=category_value,
+                        strategy=f"proposed:{proposal.strategy.kind.value}",
+                    )
+                )
+            except Exception:  # noqa: BLE001 - self-healing is optional; never blocks recovery
+                pass
 
         action_key = action.action_type.value
         decision = self._adaptation.decide(

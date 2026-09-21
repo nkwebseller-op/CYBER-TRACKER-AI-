@@ -1,0 +1,18 @@
+#!/usr/bin/env sh
+# The Gradle wrapper's launcher is normally checked in as a binary jar +
+# platform launcher script pair. In this repo we omit the wrapper JAR
+# (see docs/ANDROID_SETUP.md — build the APK either with Android Studio,
+# which regenerates the wrapper on first sync, or via the provided
+# GitHub Actions workflow which uses the actions/setup-java + Gradle
+# actions to fetch Gradle itself).
+#
+# Kept here as a placeholder so `./gradlew` shows a helpful error rather
+# than "file not found" during a naive local build attempt.
+
+echo "Gradle wrapper JAR is not committed. Options:"
+echo "  1) Open apps/android_shell/ in Android Studio (Meerkat or newer) — it"
+echo "     will download the wrapper JAR automatically."
+echo "  2) Or run: gradle wrapper --gradle-version 8.7"
+echo "  3) Or push a commit; the GitHub Actions 'android' workflow builds"
+echo "     an APK you can download from the Actions run artifacts."
+exit 1

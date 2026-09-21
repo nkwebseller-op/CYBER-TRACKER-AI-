@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="cyberai_background">#0A1810</color>
+    <color name="cyberai_accent">#3DE677</color>
+    <color name="cyberai_surface">#0F241A</color>
+</resources>

@@ -1,0 +1,55 @@
+name: Android Shell APK
+
+on:
+  push:
+    paths:
+      - "apps/android_shell/**"
+      - ".github/workflows/android.yml"
+  workflow_dispatch:
+    inputs:
+      dashboard_url:
+        description: "URL of the deployed Cyber AI dashboard the APK should load"
+        required: false
+        default: "https://cyberai.example.com"
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/android_shell
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Regenerate Gradle wrapper JAR
+        run: gradle wrapper --gradle-version 8.7 --distribution-type bin
+
+      - name: Assemble debug APK
+        env:
+          CYBERAI_DASHBOARD_URL: ${{ github.event.inputs.dashboard_url || 'https://cyberai.example.com' }}
+        run: ./gradlew --no-daemon assembleDebug
+
+      - name: Assemble release APK (unsigned)
+        env:
+          CYBERAI_DASHBOARD_URL: ${{ github.event.inputs.dashboard_url || 'https://cyberai.example.com' }}
+        run: ./gradlew --no-daemon assembleRelease
+
+      - name: Upload APK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: cyberai-android-shell-apks
+          if-no-files-found: error
+          path: |
+            apps/android_shell/app/build/outputs/apk/debug/*.apk
+            apps/android_shell/app/build/outputs/apk/release/*.apk
+          retention-days: 30
