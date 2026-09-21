@@ -1,0 +1,22 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "dockerfile",
+    "dockerfile": "./Dockerfile"
+  },
+  "deploy": {
+    "startCommand": "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+  },
+  "env": {
+    "ENVIRONMENT": "production",
+    "API_HOST": "0.0.0.0",
+    "API_PORT": "$PORT",
+    "API_CORS_ORIGINS": "https://cyber-ai-system.vercel.app",
+    "AI_PROVIDER": "gemini",
+    "AI_REQUEST_TIMEOUT_SECONDS": "30",
+    "AI_MAX_OUTPUT_TOKENS": "2048",
+    "TERMINAL_WORKSPACE_ROOT": "/tmp",
+    "TERMUX_PAIRING_CODE_TTL_SECONDS": "300",
+    "TERMUX_MAX_REGISTERED_DEVICES": "50"
+  }
+}
