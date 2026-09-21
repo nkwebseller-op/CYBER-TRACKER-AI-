@@ -32,10 +32,11 @@ from services.agent.prompts import (
     build_application_context_block,
     build_user_message_block,
 )
+import json
+
 from services.agent.providers.base import AIProvider, AIProviderError, AIProviderErrorCode, Message
 from services.agent.retry import call_with_retry
 from services.agent.schemas import (
-    GEMINI_RESPONSE_SCHEMA,
     AIResponse,
     AIResponseValidationError,
     parse_ai_response,
@@ -130,11 +131,9 @@ class ChatPipeline:
         started_at = datetime.now(UTC)
 
         async def call():
-            return await self._provider.generate_structured(
+            return await self._provider.complete(
                 provider_messages,
-                schema=GEMINI_RESPONSE_SCHEMA,
                 temperature=0.2,
-                max_output_tokens=self._max_output_tokens,
             )
 
         try:
@@ -142,7 +141,7 @@ class ChatPipeline:
                 call,
                 max_attempts=self._retry_max_attempts,
                 base_delay_seconds=self._retry_base_delay_seconds,
-                operation="chat.generate_structured",
+                operation="chat.complete",
             )
         except AIProviderError as exc:
             latency_ms = (datetime.now(UTC) - started_at).total_seconds() * 1000
@@ -161,8 +160,37 @@ class ChatPipeline:
 
         latency_ms = (datetime.now(UTC) - started_at).total_seconds() * 1000
 
+        # Extract JSON from the plain text response (strip any markdown fences)
+        raw_text = result.text.strip()
+        if raw_text.startswith("```"):
+            lines = raw_text.splitlines()
+            start = 1
+            end = len(lines) - 1 if lines[-1].strip() == "```" else len(lines)
+            raw_text = "\n".join(lines[start:end])
+
+        logger.info(
+            "chat_raw_response",
+            request_id=turn.request_id,
+            provider=self._provider.name,
+            preview=raw_text[:300],
+        )
+
         try:
-            ai_response = parse_ai_response(result.data)
+            data = json.loads(raw_text)
+        except (json.JSONDecodeError, ValueError) as exc:
+            logger.error(
+                "chat_response_not_json",
+                request_id=turn.request_id,
+                provider=self._provider.name,
+                preview=raw_text[:200],
+            )
+            raise ChatPipelineError(
+                ChatPipelineErrorCode.UNEXPECTED_RESPONSE,
+                "The AI provider returned a response that could not be parsed.",
+            ) from exc
+
+        try:
+            ai_response = parse_ai_response(data)
         except AIResponseValidationError as exc:
             logger.error(
                 "chat_response_validation_failed",
@@ -171,7 +199,7 @@ class ChatPipeline:
                 provider=self._provider.name,
                 latency_ms=latency_ms,
                 validation_error=str(exc)[:500],
-                data_keys=list(result.data.keys()) if isinstance(result.data, dict) else None,
+                data_keys=list(data.keys()) if isinstance(data, dict) else None,
             )
             raise ChatPipelineError(
                 ChatPipelineErrorCode.INVALID_TASK,
