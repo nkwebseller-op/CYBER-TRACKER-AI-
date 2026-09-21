@@ -194,7 +194,6 @@ class GeminiProvider(AIProvider):
                 config={
                     "temperature": temperature,
                     "response_mime_type": "application/json",
-                    "response_schema": schema,
                     **({"system_instruction": system_prompt} if system_prompt else {}),
                     **(
                         {"max_output_tokens": max_output_tokens or self._max_output_tokens}
