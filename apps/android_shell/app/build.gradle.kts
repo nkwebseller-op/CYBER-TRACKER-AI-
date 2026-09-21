@@ -3,6 +3,10 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+base {
+    archivesName.set("CyberAISystem-v0.1.0")
+}
+
 android {
     namespace = "com.cyberai.shell"
     compileSdk = 34
@@ -22,8 +26,6 @@ android {
             ?: "https://cyberai.local/onboarding"
         buildConfigField("String", "DASHBOARD_URL", "\"$dashboardUrl\"")
     }
-
-    setProperty("archivesBaseName", "CyberAISystem-v0.1.0")
 
     buildFeatures {
         viewBinding = true
