@@ -10,7 +10,7 @@ on:
       dashboard_url:
         description: "URL of the deployed Cyber AI dashboard the APK should load"
         required: false
-        default: "https://cyberai.example.com"
+        default: "https://cyber-ai-system.vercel.app"
 
 jobs:
   build-apk:
@@ -42,12 +42,12 @@ jobs:
 
       - name: Assemble debug APK
         env:
-          CYBERAI_DASHBOARD_URL: ${{ github.event.inputs.dashboard_url || 'https://cyberai.example.com' }}
+          CYBERAI_DASHBOARD_URL: ${{ github.event.inputs.dashboard_url || 'https://cyber-ai-system.vercel.app' }}
         run: ./gradlew --no-daemon assembleDebug
 
       - name: Assemble release APK (unsigned)
         env:
-          CYBERAI_DASHBOARD_URL: ${{ github.event.inputs.dashboard_url || 'https://cyberai.example.com' }}
+          CYBERAI_DASHBOARD_URL: ${{ github.event.inputs.dashboard_url || 'https://cyber-ai-system.vercel.app' }}
         run: ./gradlew --no-daemon assembleRelease
 
       - name: Upload APK artifacts
