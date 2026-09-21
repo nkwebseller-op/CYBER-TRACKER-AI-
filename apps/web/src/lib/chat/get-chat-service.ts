@@ -12,7 +12,7 @@ let cachedService: ChatService | null = null;
 
 export function getChatService(): ChatService {
   if (!cachedService) {
-    const provider = process.env.NEXT_PUBLIC_CHAT_PROVIDER ?? "mock";
+    const provider = process.env.NEXT_PUBLIC_CHAT_PROVIDER ?? "http";
     cachedService = provider === "http" ? new HttpChatService() : new MockChatService();
   }
   return cachedService;
