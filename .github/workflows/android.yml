@@ -57,3 +57,23 @@ jobs:
             apps/android_shell/app/build/outputs/apk/debug/*.apk
             apps/android_shell/app/build/outputs/apk/release/*.apk
           retention-days: 30
+
+      - name: Publish APK to a GitHub Release
+        if: github.ref == 'refs/heads/claude/cyber-ai-foundation-upar86' || github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-apk-latest
+          name: Cyber AI System — Android APK (latest)
+          body: |
+            Automatically built Android APK for the Cyber AI System dashboard shell.
+            - `*-debug.apk`: installable directly, for testing.
+            - `*-release-unsigned.apk`: unsigned release build; sign before distributing widely.
+
+            Built from commit ${{ github.sha }}.
+          prerelease: true
+          make_latest: false
+          files: |
+            apps/android_shell/app/build/outputs/apk/debug/*.apk
+            apps/android_shell/app/build/outputs/apk/release/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
