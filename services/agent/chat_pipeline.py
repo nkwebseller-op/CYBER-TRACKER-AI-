@@ -170,6 +170,8 @@ class ChatPipeline:
                 conversation_id=turn.conversation_id,
                 provider=self._provider.name,
                 latency_ms=latency_ms,
+                validation_error=str(exc)[:500],
+                data_keys=list(result.data.keys()) if isinstance(result.data, dict) else None,
             )
             raise ChatPipelineError(
                 ChatPipelineErrorCode.INVALID_TASK,

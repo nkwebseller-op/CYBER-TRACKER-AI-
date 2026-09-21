@@ -209,10 +209,39 @@ class GeminiProvider(AIProvider):
         raw_text = response.text or ""
         import json
 
+        # Strip markdown code fences that some Gemini models add even in JSON mode
+        cleaned = raw_text.strip()
+        if cleaned.startswith("```"):
+            lines = cleaned.splitlines()
+            # drop opening fence (```json or ```) and closing fence
+            start = 1
+            end = len(lines)
+            if lines[-1].strip() == "```":
+                end = len(lines) - 1
+            cleaned = "\n".join(lines[start:end])
+
+        logger.info(
+            "gemini_structured_raw_response",
+            model=self._model,
+            raw_length=len(raw_text),
+            cleaned_preview=cleaned[:300],
+        )
+
+        if not cleaned:
+            logger.warning("gemini_structured_empty_response", model=self._model)
+            raise AIProviderError(
+                "The AI provider returned an empty response.",
+                code=AIProviderErrorCode.INVALID_RESPONSE,
+            )
+
         try:
-            data = json.loads(raw_text)
+            data = json.loads(cleaned)
         except (json.JSONDecodeError, TypeError) as exc:
-            logger.warning("gemini_structured_response_not_json", model=self._model)
+            logger.warning(
+                "gemini_structured_response_not_json",
+                model=self._model,
+                preview=cleaned[:200],
+            )
             raise AIProviderError(
                 "The AI provider returned a response that could not be parsed.",
                 code=AIProviderErrorCode.INVALID_RESPONSE,
