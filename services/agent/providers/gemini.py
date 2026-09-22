@@ -70,10 +70,16 @@ class GeminiProvider(AIProvider):
 
     def _get_client(self):
         if self._client is None:
-            from google import genai  # imported lazily so importing this module never
+            from google import genai
 
-            # requires the SDK to be installed unless gemini is actually selected.
-            self._client = genai.Client(api_key=self._api_key)
+            # AQ. prefix keys are OAuth2 access tokens from Google AI Studio;
+            # they must be passed as credentials, not as an API key query param.
+            if self._api_key.startswith("AQ."):
+                from google.oauth2.credentials import Credentials
+                creds = Credentials(token=self._api_key)
+                self._client = genai.Client(credentials=creds)
+            else:
+                self._client = genai.Client(api_key=self._api_key)
         return self._client
 
     @staticmethod
