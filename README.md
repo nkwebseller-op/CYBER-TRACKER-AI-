@@ -20,22 +20,39 @@ python -m studio          # http://127.0.0.1:8000
 
 Or `docker build -t studio . && docker run -p 8000:8000 -v studio-data:/data studio`.
 
-## What is real and what is a placeholder
+## Providers
 
-| Stage  | Default    | Notes |
-| ------ | ---------- | ----- |
-| Script | `template` | Deterministic, offline. Splits your brief into scenes with a hook and call to action. No invented claims. |
-| Voice  | `mock`     | Silence timed to the script, so the pipeline runs with no key. Set `VOICE_PROVIDER=elevenlabs` plus `ELEVENLABS_API_KEY` and `ELEVENLABS_VOICE_ID` for real speech. |
-| Video  | `cards`    | Offline ffmpeg renderer: fade-in caption cards synced to the voiceover. It is **not** a generative-video model. |
+| Stage  | Default    | Real option |
+| ------ | ---------- | ----------- |
+| Script | `template` | none yet (deterministic, offline, adds no claims of its own) |
+| Voice  | `mock`     | `VOICE_PROVIDER=elevenlabs` |
+| Video  | `cards`    | `VIDEO_PROVIDER=replicate` |
 
-Generative video and LLM scriptwriting are not included. Add them by implementing
-the `VideoProvider` / `ScriptWriter` protocols in `studio/providers/base.py` and
-registering them in `studio/providers/__init__.py`.
+The defaults need no keys: the voice is silence and the video is ffmpeg caption cards,
+so you can try the whole flow for free.
+
+**ElevenLabs voice.** Set `VOICE_PROVIDER=elevenlabs`, `ELEVENLABS_API_KEY`, and
+optionally `ELEVENLABS_VOICE_ID` as the default. The voice box in the UI lists the
+voices on your account.
+
+**AI video (Replicate).** Set `VIDEO_PROVIDER=replicate` and `REPLICATE_API_TOKEN`.
+Each scene becomes one text-to-video clip (`google/veo-3.1-fast` by default). Clips are
+trimmed or looped to the scene length, cropped to your format, captioned, and mixed with
+the voiceover; the model's own audio is dropped. To use a different model, change
+`REPLICATE_VIDEO_MODEL` and `REPLICATE_VIDEO_INPUT` together, because input names differ
+per model (check its API tab). Costs are per clip, so a 20 second video is about 5 runs.
+`REPLICATE_MAX_CLIPS` refuses oversized scripts before any money is spent.
+
+> Both integrations were built against the providers' published API docs and tested with
+> mocked HTTP. They have not been run against the live services, so try one short video
+> first.
+
+Other providers plug in through the protocols in `studio/providers/base.py`.
 
 ## Limits
 
 There is no built-in cap by default (`MAX_JOBS_PER_DAY=0`), so you can queue as many
-videos as you like. Real providers bill your own account per use, so set
+videos as you like. ElevenLabs and Replicate bill your own account per use, so set
 `MAX_JOBS_PER_DAY` and `MAX_CONCURRENT_JOBS` to match your budget.
 
 ## API

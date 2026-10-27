@@ -13,7 +13,7 @@ from .config import Settings
 from .db import JobStore, row_to_job
 from .models import Job, JobRequest, Script, Tone
 from .pipeline import Pipeline
-from .providers import build_providers
+from .providers import ProviderError, build_providers
 
 _STATIC = Path(__file__).parent / "static"
 
@@ -48,6 +48,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "max_jobs_per_day": settings.max_jobs_per_day or None,
             "jobs_today": store.count_today(),
         }
+
+    @app.get("/api/voices")
+    async def list_voices() -> list[dict[str, str]]:
+        lister = getattr(providers.voice, "list_voices", None)
+        if lister is None:
+            return []
+        try:
+            return await lister()
+        except ProviderError as exc:
+            raise HTTPException(502, str(exc)) from exc
 
     @app.post("/api/script", response_model=Script)
     async def preview_script(brief: str, tone: Tone = "energetic", duration_s: int = 20) -> Script:

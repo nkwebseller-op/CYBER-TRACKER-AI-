@@ -1,7 +1,4 @@
-import pytest
 
-from studio.providers.base import ProviderError
-from studio.providers.elevenlabs import ElevenLabsVoice
 from studio.providers.template_script import TemplateScriptWriter
 
 
@@ -19,6 +16,22 @@ async def test_template_script_respects_duration_budget():
     assert len(script.narration.split()) <= 10 * 2.5 + 10
 
 
-def test_elevenlabs_requires_key():
-    with pytest.raises(ProviderError):
-        ElevenLabsVoice("", "voice", "model")
+
+
+def test_build_providers_requires_credentials_for_real_providers(settings):
+    import dataclasses
+
+    import pytest
+
+    from studio.providers import ProviderError, build_providers
+
+    with pytest.raises(ProviderError, match="REPLICATE_API_TOKEN"):
+        build_providers(dataclasses.replace(settings, video_provider="replicate"))
+    with pytest.raises(ProviderError, match="ELEVENLABS_API_KEY"):
+        build_providers(dataclasses.replace(settings, voice_provider="elevenlabs"))
+    with pytest.raises(ProviderError, match="not valid JSON"):
+        build_providers(
+            dataclasses.replace(
+                settings, video_provider="replicate", replicate_api_token="t", replicate_video_input="{"
+            )
+        )

@@ -22,6 +22,8 @@ Tone = Literal["energetic", "professional", "friendly", "luxury"]
 class Scene(BaseModel):
     caption: str
     narration: str
+    # Prompt for generative video providers; falls back to the caption when unset.
+    visual: str | None = None
 
 
 class Script(BaseModel):

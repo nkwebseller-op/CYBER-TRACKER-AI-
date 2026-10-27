@@ -34,6 +34,16 @@ class Settings:
     elevenlabs_voice_id: str = os.getenv("ELEVENLABS_VOICE_ID", "")
     elevenlabs_model: str = os.getenv("ELEVENLABS_MODEL", "eleven_multilingual_v2")
 
+    replicate_api_token: str = os.getenv("REPLICATE_API_TOKEN", "")
+    replicate_video_model: str = os.getenv("REPLICATE_VIDEO_MODEL", "google/veo-3.1-fast")
+    # JSON merged into every prediction input; model specific. Defaults suit the default model.
+    replicate_video_input: str = os.getenv(
+        "REPLICATE_VIDEO_INPUT", '{"generate_audio": false, "resolution": "720p"}'
+    )
+    replicate_clip_seconds: int = int(os.getenv("REPLICATE_CLIP_SECONDS", "8"))
+    replicate_timeout_seconds: float = float(os.getenv("REPLICATE_TIMEOUT_SECONDS", "600"))
+    replicate_max_clips: int = int(os.getenv("REPLICATE_MAX_CLIPS", "6"))
+
     # 0 means no cap: you are limited only by your provider keys and budget.
     max_jobs_per_day: int = int(os.getenv("MAX_JOBS_PER_DAY", "0"))
     max_concurrent_jobs: int = int(os.getenv("MAX_CONCURRENT_JOBS", "2"))

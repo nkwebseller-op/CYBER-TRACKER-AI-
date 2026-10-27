@@ -86,4 +86,12 @@ $("preview").onclick = async () => {
   }
 };
 
+async function loadVoices() {
+  try {
+    const voices = await api("/api/voices");
+    $("voices").replaceChildren(...voices.map((v) => el("option", { value: v.id, label: v.name })));
+  } catch { /* free-text voice id still works */ }
+}
+
+loadVoices();
 refresh().catch((err) => { $("error").textContent = err.message; });
