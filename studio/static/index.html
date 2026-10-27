@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spotlight Studio</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Spotlight Studio</h1>
+    <p id="status" class="muted"></p>
+  </header>
+  <main>
+    <section class="panel">
+      <h2>New video</h2>
+      <form id="form">
+        <label>Brief
+          <textarea id="brief" rows="5" required minlength="3"
+            placeholder="Describe the product and what to say. One point per sentence works best."></textarea>
+        </label>
+        <div class="row">
+          <label>Tone
+            <select id="tone">
+              <option>energetic</option><option>professional</option>
+              <option>friendly</option><option>luxury</option>
+            </select>
+          </label>
+          <label>Format
+            <select id="aspect">
+              <option value="9:16">9:16 vertical</option>
+              <option value="1:1">1:1 square</option>
+              <option value="16:9">16:9 wide</option>
+            </select>
+          </label>
+          <label>Length (s)
+            <input id="duration" type="number" min="5" max="120" value="20">
+          </label>
+        </div>
+        <label>Voice ID <span class="muted">(optional, provider specific)</span>
+          <input id="voice" type="text" autocomplete="off">
+        </label>
+        <div class="row">
+          <button type="button" id="preview">Preview script</button>
+          <button type="submit" class="primary">Generate video</button>
+        </div>
+        <pre id="script" hidden></pre>
+        <p id="error" class="error" role="alert"></p>
+      </form>
+    </section>
+    <section class="panel">
+      <h2>Your videos</h2>
+      <div id="jobs"></div>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

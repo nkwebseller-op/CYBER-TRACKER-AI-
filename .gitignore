@@ -30,3 +30,6 @@ venv/
 
 # logs
 *.log
+
+# studio runtime data
+data/

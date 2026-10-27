@@ -1,0 +1,32 @@
+:root {
+  --bg: #f6f7f9; --panel: #fff; --text: #0f172a; --muted: #64748b;
+  --border: #e2e8f0; --accent: #4f46e5; --danger: #b91c1c;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0b1020; --panel: #121933; --text: #e8ecf8; --muted: #94a3b8; --border: #243056; --accent: #818cf8; --danger: #f87171; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, sans-serif; }
+header, main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+h1 { margin: 8px 0 0; font-size: 1.5rem; }
+h2 { margin: 0 0 12px; font-size: 1.1rem; }
+main { display: grid; gap: 16px; grid-template-columns: 1fr; }
+@media (min-width: 900px) { main { grid-template-columns: 420px 1fr; align-items: start; } }
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+label { display: block; margin-bottom: 12px; font-size: .9rem; }
+textarea, input, select { display: block; width: 100%; margin-top: 4px; padding: 8px; color: inherit; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; font: inherit; }
+.row { display: flex; gap: 12px; flex-wrap: wrap; }
+.row > label { flex: 1 1 100px; }
+button { padding: 10px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel); color: inherit; font: inherit; cursor: pointer; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button:disabled { opacity: .6; cursor: wait; }
+pre { white-space: pre-wrap; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-size: .85rem; }
+.muted { color: var(--muted); font-size: .85rem; }
+.error { color: var(--danger); min-height: 1.5em; margin: 8px 0 0; }
+.job { border-top: 1px solid var(--border); padding: 12px 0; }
+.job:first-child { border-top: 0; }
+.job video { width: 100%; max-height: 420px; border-radius: 8px; background: #000; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 999px; background: var(--bg); border: 1px solid var(--border); font-size: .75rem; }
+.badge.done { color: #15803d; } .badge.failed { color: var(--danger); }
+.job-actions { display: flex; gap: 12px; margin-top: 8px; font-size: .85rem; }
+.job-actions a, .job-actions button { color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; font: inherit; }
