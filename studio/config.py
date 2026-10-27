@@ -30,6 +30,9 @@ class Settings:
     voice_provider: str = os.getenv("VOICE_PROVIDER", "mock")
     video_provider: str = os.getenv("VIDEO_PROVIDER", "cards")
 
+    anthropic_api_key: str = os.getenv("ANTHROPIC_API_KEY", "")
+    anthropic_model: str = os.getenv("ANTHROPIC_MODEL", "claude-opus-5-5")
+
     elevenlabs_api_key: str = os.getenv("ELEVENLABS_API_KEY", "")
     elevenlabs_voice_id: str = os.getenv("ELEVENLABS_VOICE_ID", "")
     elevenlabs_model: str = os.getenv("ELEVENLABS_MODEL", "eleven_multilingual_v2")

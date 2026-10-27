@@ -54,7 +54,7 @@ async function refresh() {
   const [jobs, cfg] = await Promise.all([api("/api/jobs"), api("/api/config")]);
   $("jobs").replaceChildren(...(jobs.length ? jobs.map(renderJob) : [el("p", { className: "muted" }, "Nothing yet.")]));
   const cap = cfg.max_jobs_per_day ? `${cfg.jobs_today}/${cfg.max_jobs_per_day} today` : "no daily cap";
-  $("status").textContent = `Voice: ${cfg.voice_provider} · Video: ${cfg.video_provider} · ${cap}`;
+  $("status").textContent = `Script: ${cfg.script_provider} · Voice: ${cfg.voice_provider} · Video: ${cfg.video_provider} · ${cap}`;
   if (jobs.some((j) => ACTIVE.has(j.status))) timer = setTimeout(refresh, 2000);
 }
 

@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from ..config import Settings
 from .base import ProviderError, ScriptWriter, VideoProvider, VoiceProvider
 from .cards_video import CardsVideo
+from .claude_script import ClaudeScriptWriter
 from .elevenlabs import ElevenLabsVoice
 from .mock_voice import MockVoice
 from .replicate_video import ReplicateVideo
@@ -22,7 +23,18 @@ class Providers:
 
 
 def build_providers(settings: Settings) -> Providers:
-    if settings.script_provider != "template":
+    script: ScriptWriter
+    if settings.script_provider == "template":
+        script = TemplateScriptWriter()
+    elif settings.script_provider == "claude":
+        # With paid AI video every scene costs money, so the script must respect its clip cap.
+        max_scenes = settings.replicate_max_clips if settings.video_provider == "replicate" else 8
+        script = ClaudeScriptWriter(
+            api_key=settings.anthropic_api_key,
+            model=settings.anthropic_model,
+            max_scenes=max_scenes,
+        )
+    else:
         raise ProviderError(f"Unknown SCRIPT_PROVIDER {settings.script_provider!r}")
     voice: VoiceProvider
     if settings.voice_provider == "mock":
@@ -56,4 +68,4 @@ def build_providers(settings: Settings) -> Providers:
         )
     else:
         raise ProviderError(f"Unknown VIDEO_PROVIDER {settings.video_provider!r}")
-    return Providers(script=TemplateScriptWriter(), voice=voice, video=video)
+    return Providers(script=script, voice=voice, video=video)

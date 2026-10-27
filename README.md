@@ -24,12 +24,21 @@ Or `docker build -t studio . && docker run -p 8000:8000 -v studio-data:/data stu
 
 | Stage  | Default    | Real option |
 | ------ | ---------- | ----------- |
-| Script | `template` | none yet (deterministic, offline, adds no claims of its own) |
+| Script | `template` | `SCRIPT_PROVIDER=claude` |
 | Voice  | `mock`     | `VOICE_PROVIDER=elevenlabs` |
 | Video  | `cards`    | `VIDEO_PROVIDER=replicate` |
 
 The defaults need no keys: the voice is silence and the video is ffmpeg caption cards,
 so you can try the whole flow for free.
+
+**Claude scriptwriter.** Set `SCRIPT_PROVIDER=claude` and `ANTHROPIC_API_KEY`. Claude turns
+your brief into a hook, scenes with narration, short on-screen captions, and a visual prompt
+per scene for the video model, ending in a call to action. It is told to use only facts from
+your brief and not to invent prices, stats, or testimonials, and the brief is passed as data,
+not instructions. The model is `claude-opus-5-5` by default; set `ANTHROPIC_MODEL` (for
+example `claude-sonnet-5-5`) to trade quality for cost. Scene count is capped by
+`REPLICATE_MAX_CLIPS` when you use AI video. A request that Claude declines is retried
+server-side on a fallback model, and a final refusal is shown as a clear error.
 
 **ElevenLabs voice.** Set `VOICE_PROVIDER=elevenlabs`, `ELEVENLABS_API_KEY`, and
 optionally `ELEVENLABS_VOICE_ID` as the default. The voice box in the UI lists the
@@ -43,7 +52,7 @@ the voiceover; the model's own audio is dropped. To use a different model, chang
 per model (check its API tab). Costs are per clip, so a 20 second video is about 5 runs.
 `REPLICATE_MAX_CLIPS` refuses oversized scripts before any money is spent.
 
-> Both integrations were built against the providers' published API docs and tested with
+> These integrations were built against the providers' published API docs and tested with
 > mocked HTTP. They have not been run against the live services, so try one short video
 > first.
 
@@ -52,7 +61,7 @@ Other providers plug in through the protocols in `studio/providers/base.py`.
 ## Limits
 
 There is no built-in cap by default (`MAX_JOBS_PER_DAY=0`), so you can queue as many
-videos as you like. ElevenLabs and Replicate bill your own account per use, so set
+videos as you like. Anthropic, ElevenLabs and Replicate bill your own account per use, so set
 `MAX_JOBS_PER_DAY` and `MAX_CONCURRENT_JOBS` to match your budget.
 
 ## API

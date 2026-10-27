@@ -43,6 +43,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/api/config")
     def get_config() -> dict[str, object]:
         return {
+            "script_provider": settings.script_provider,
             "voice_provider": settings.voice_provider,
             "video_provider": settings.video_provider,
             "max_jobs_per_day": settings.max_jobs_per_day or None,
@@ -63,7 +64,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def preview_script(brief: str, tone: Tone = "energetic", duration_s: int = 20) -> Script:
         if not 3 <= len(brief) <= settings.max_prompt_chars:
             raise HTTPException(422, "Brief length is out of range")
-        return await providers.script.write(brief, tone, max(5, min(duration_s, 120)))
+        try:
+            return await providers.script.write(brief, tone, max(5, min(duration_s, 120)))
+        except ProviderError as exc:
+            raise HTTPException(502, str(exc)) from exc
 
     @app.post("/api/jobs", response_model=Job, status_code=202)
     async def create_job(request: JobRequest) -> Job:
