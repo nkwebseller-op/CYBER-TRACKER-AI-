@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spotlight Studio (Free)</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Spotlight Studio <span class="badge">Free</span></h1>
+    <p class="muted">Runs entirely in your browser. Nothing is uploaded.</p>
+  </header>
+  <main>
+    <section class="panel">
+      <h2>New video</h2>
+      <form id="form">
+        <label>Brief
+          <textarea id="brief" rows="5" required minlength="3" maxlength="2000"
+            placeholder="Describe the product. One point per sentence works best."></textarea>
+        </label>
+        <div class="row">
+          <label>Tone
+            <select id="tone">
+              <option>energetic</option><option>professional</option>
+              <option>friendly</option><option>luxury</option>
+            </select>
+          </label>
+          <label>Format
+            <select id="aspect">
+              <option value="9:16">9:16 vertical</option>
+              <option value="1:1">1:1 square</option>
+              <option value="16:9">16:9 wide</option>
+            </select>
+          </label>
+          <label>Length (s)
+            <input id="duration" type="number" min="5" max="60" value="15">
+          </label>
+        </div>
+        <label>Voice
+          <select id="voice"></select>
+        </label>
+        <div class="row">
+          <button type="button" id="preview">Preview with voice</button>
+          <button type="submit" class="primary">Create video</button>
+        </div>
+        <p id="status" class="muted" role="status"></p>
+        <p id="error" class="error" role="alert"></p>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>Result</h2>
+      <canvas id="canvas" width="720" height="1280" hidden></canvas>
+      <video id="player" controls playsinline hidden></video>
+      <p id="empty" class="muted">Your video will appear here.</p>
+      <div class="actions" id="downloads" hidden>
+        <a id="download" class="button" download="spotlight-video.webm">Download video (silent)</a>
+      </div>
+      <p class="muted small">
+        The downloaded file has captions and timing but no voice: browsers can't record speech
+        synthesis. Use "Preview with voice" to hear the narration.
+      </p>
+    </section>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>
